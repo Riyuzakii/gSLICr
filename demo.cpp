@@ -9,12 +9,22 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/opencv.hpp"
-
-
+#include "./gSLICr_Lib/objects/gSLICr_spixel_info.h"
+#include "./gSLICr_Lib/engines/gSLICr_seg_engine_shared.h"
 
 
 using namespace std;
 using namespace cv;
+
+
+struct pub_info
+{
+	float centre_x;
+	float centre_y;
+	float avg_colors[3];
+	float size;
+};
+
 
 void load_image(const Mat& inimg, gSLICr::UChar4Image* outimg)
 {
@@ -61,9 +71,9 @@ int main()
 	// gSLICr settings
 	gSLICr::objects::settings my_settings;
 
-	my_settings.img_size.x = 700;
-	my_settings.img_size.y = 700;
-	my_settings.no_segs = 750;
+	my_settings.img_size.x = 500;
+	my_settings.img_size.y = 500;
+	my_settings.no_segs = 250;
 	my_settings.spixel_size = 200;
 	my_settings.coh_weight = 1.0f;
 	my_settings.no_iters = 5;
@@ -84,19 +94,22 @@ int main()
 	Mat oldFrame, frame;
 	Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
 
+	pub_info obj[my_settings.no_segs]; // this object has to be published
+
     //StopWatchInterface *my_timer; sdkCreateTimer(&my_timer);
    
 	int key; int save_count = 0;
 	while (cap.read(oldFrame))
 	{
-
-	float blue_sum[my_settings.no_segs*(3/2)]={0},green_sum[my_settings.no_segs*(3/2)]={0},red_sum[my_settings.no_segs*(3/2)]={0};
-    int blue[my_settings.img_size.x][my_settings.img_size.y]={0};
-	int green[my_settings.img_size.x][my_settings.img_size.y]={0};
-	int red[my_settings.img_size.x][my_settings.img_size.y]={0};
-	int matrix[490000]={0};
-	
-
+		//int cen	= spixel_list[0].id;
+		float blue_sum[my_settings.no_segs*(2)]={0},green_sum[my_settings.no_segs*(2)]={0},red_sum[my_settings.no_segs*(2)]={0};
+   		int blue[my_settings.img_size.x][my_settings.img_size.y]={0};
+		int green[my_settings.img_size.x][my_settings.img_size.y]={0};
+		int red[my_settings.img_size.x][my_settings.img_size.y]={0};
+		int sum_x[my_settings.no_segs]={0},sum_y[my_settings.no_segs]={0};
+		int matrix[250000]={0};
+		
+		pub_info *obj=(pub_info*)malloc(2*my_settings.no_segs*sizeof(pub_info));
 		resize(oldFrame, frame, s);
 		
 		load_image(frame, in_img);
@@ -128,6 +141,8 @@ int main()
 			blue_sum[matrix[i]]+=blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
 			red_sum[matrix[i]]+=red[i/my_settings.img_size.x][i%my_settings.img_size.x];
 			green_sum[matrix[i]]+=green[i/my_settings.img_size.x][i%my_settings.img_size.x];
+			sum_x[matrix[i]]+= (i/my_settings.img_size.x);
+			sum_y[matrix[i]]+= (i%my_settings.img_size.x);
 			count[matrix[i]]++;
 		}
 		//---------------------------------------------------
@@ -140,6 +155,20 @@ int main()
 				M.at<cv::Vec3b>(i,j)[2]=red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
 			}
 		}
+		// now compute all properties of pub_info obj[no_segs]
+		for(int i=0;i<=my_settings.no_segs;i++)
+		{
+			if(count[i]!=0){
+						obj[i].size=count[i];
+						obj[i].avg_colors[0]=(int)(blue_sum[i]/count[i]);
+						obj[i].avg_colors[1]=(int)(green_sum[i]/count[i]);
+						obj[i].avg_colors[2]=(int)(red_sum[i]/count[i]);
+						obj[i].centre_x=(int)(sum_x[i]/count[i]);
+						obj[i].centre_y=(int)(sum_y[i]/count[i]);
+					}
+		}
+		
+		cout<<obj[0].centre_x<<endl;
 		resize(M, M2, s1);
 		 // M stores the averages
 		imshow("test", M2);
@@ -147,6 +176,7 @@ int main()
 
 		key = waitKey(1);
 		if (key == 27) break;
+		free(obj);
 		
 	}
 
