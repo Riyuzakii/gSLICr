@@ -48,7 +48,7 @@ void load_image(const gSLICr::UChar4Image* inimg, Mat& outimg)
 int main()
 {
 	cout << "hell";
-	VideoCapture cap("../sam1.webm");
+	VideoCapture cap(0);
 
 
 	if (!cap.isOpened()) 
@@ -75,7 +75,6 @@ int main()
 	// instantiate a core_engine
 	gSLICr::engines::core_engine* gSLICr_engine = new gSLICr::engines::core_engine(my_settings);
 
-	// gSLICr takes gSLICr::UChar4Image as input and out put
 	gSLICr::UChar4Image* in_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
 	gSLICr::UChar4Image* out_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
 
@@ -107,16 +106,11 @@ int main()
         //sdkStopTimer(&my_timer); 
         //cout<<"\rsegmentation in:["<<sdkGetTimerValue(&my_timer)<<"]ms"<<flush;
 		gSLICr_engine->Draw_Segmentation_Result(out_img);
-		//
 		cv::namedWindow("tt",0);
 		load_image(out_img, boundry_draw_frame);
 		cv::imshow("tt", boundry_draw_frame);
-		//IntImage * mat = slic_seg_engine->Get_Seg_Mask();
 		
-
-
 		gSLICr_engine->Write_Seg_Res_To_PGM("abc",matrix);
-		cout << "hell    "<<matrix[400*500]<<endl;
 		Mat M = frame;
 		Mat M2;
 		for(int i=0;i<my_settings.img_size.x;i++)
@@ -128,10 +122,7 @@ int main()
 				red[i][j]=M.at<cv::Vec3b>(i,j)[2]; // r
 			}
 		}
-		//cv::namedWindow("tt",0);
-		//cout << "hiiii"<<blue[0][0];
-		// ------------------------------------ i got red green and blue for each (i,j)
-		//cv::imshow("tt",M);
+		
 		for(int i=0;i<my_settings.img_size.x*my_settings.img_size.y;i++)
 		{
 			blue_sum[matrix[i]]+=blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
@@ -139,7 +130,6 @@ int main()
 			green_sum[matrix[i]]+=green[i/my_settings.img_size.x][i%my_settings.img_size.x];
 			count[matrix[i]]++;
 		}
-		cout << red_sum[23]/count[23];
 		//---------------------------------------------------
 		for(int i=0;i<my_settings.img_size.y;i++)
 		{
@@ -151,59 +141,13 @@ int main()
 			}
 		}
 		resize(M, M2, s1);
-		 // shayad M me averages hain 
+		 // M stores the averages
 		imshow("test", M2);
 
 
 		key = waitKey(1);
 		if (key == 27) break;
-		/*else if (key == 's')
-		{
-			char out_name[100];
-			
-			sprintf(out_name, "seg_%04i.pgm", save_count);
-			int * matrix=gSLICr_engine->Write_Seg_Res_To_PGM(out_name);
-=======
-	Mat oldFrame, frame;
-	Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
-
-    StopWatchInterface *my_timer; sdkCreateTimer(&my_timer);
-    
-	int key; int save_count = 0;
-	while (cap.read(oldFrame))
-	{
-		resize(oldFrame, frame, s);
 		
-		load_image(frame, in_img);
-        
-        sdkResetTimer(&my_timer); sdkStartTimer(&my_timer);
-		gSLICr_engine->Process_Frame(in_img);
-        sdkStopTimer(&my_timer); 
-        cout<<"\rsegmentation in:["<<sdkGetTimerValue(&my_timer)<<"]ms"<<flush;
-        
-		gSLICr_engine->Draw_Segmentation_Result(out_img);
-		
-		load_image(out_img, boundry_draw_frame);
-		imshow("segmentation", boundry_draw_frame);
-
-		key = waitKey(1);
-		if (key == 27) break;
-		else if (key == 's')
-		{
-			char out_name[100];
-			sprintf(out_name, "seg_%04i.pgm", save_count);
-			gSLICr_engine->Write_Seg_Res_To_PGM(out_name);
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
-			sprintf(out_name, "edge_%04i.png", save_count);
-			imwrite(out_name, boundry_draw_frame);
-			sprintf(out_name, "img_%04i.png", save_count);
-			imwrite(out_name, frame);
-<<<<<<< HEAD
-			//printf("\nsaved segmentation %04i\n", save_count);
-			
-			save_count++;
-		}*/
-
 	}
 
 	destroyAllWindows();

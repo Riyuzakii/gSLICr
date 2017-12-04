@@ -38,11 +38,6 @@ void seg_engine::Perform_Segmentation(UChar4Image* in_img)
 		Find_Center_Association();
 	}
 
-
-	idx_img->UpdateHostFromDevice();
-		
-		//cout<<sizeof(*idx_img) << "   " << spixel_size <<" "<< sizeof(*spixel_map); 
-
 	if(gSLICr_settings.do_enforce_connectivity) Enforce_Connectivity();
 	cudaThreadSynchronize();
 }
