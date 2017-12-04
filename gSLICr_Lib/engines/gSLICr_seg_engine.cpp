@@ -1,9 +1,6 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of gSLICr
-<<<<<<< HEAD
-#include <iostream>
-=======
 
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
+#include <iostream>
 #pragma once
 #include "gSLICr_seg_engine.h"
 
@@ -41,14 +38,11 @@ void seg_engine::Perform_Segmentation(UChar4Image* in_img)
 		Find_Center_Association();
 	}
 
-<<<<<<< HEAD
+
 	idx_img->UpdateHostFromDevice();
 		
 		//cout<<sizeof(*idx_img) << "   " << spixel_size <<" "<< sizeof(*spixel_map); 
-	
 
-=======
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
 	if(gSLICr_settings.do_enforce_connectivity) Enforce_Connectivity();
 	cudaThreadSynchronize();
 }

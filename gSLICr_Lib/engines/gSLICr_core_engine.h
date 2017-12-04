@@ -29,11 +29,8 @@ namespace gSLICr
 			void Draw_Segmentation_Result(UChar4Image* out_img);
 
 			// Write the segmentation result to a PGM image
-<<<<<<< HEAD
 			void Write_Seg_Res_To_PGM(const char* fileName,int *lable_array);
-=======
-			void Write_Seg_Res_To_PGM(const char* fileName);
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
+
 		};
 	}
 }

@@ -1,11 +1,8 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of gSLICr
 
 #pragma once
-<<<<<<< HEAD
-
 #include <iostream>
-=======
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
+
 #include "gSLICr_core_engine.h"
 #include <fstream>
 
@@ -37,17 +34,12 @@ void gSLICr::engines::core_engine::Draw_Segmentation_Result(UChar4Image* out_img
 	slic_seg_engine->Draw_Segmentation_Result(out_img);
 }
 
-<<<<<<< HEAD
 void gSLICr::engines::core_engine::Write_Seg_Res_To_PGM(const char* fileName, int *lable_array)
-=======
-void gSLICr::engines::core_engine::Write_Seg_Res_To_PGM(const char* fileName)
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
 {
 	const IntImage* idx_img = slic_seg_engine->Get_Seg_Mask();
 	int width = idx_img->noDims.x;
 	int height = idx_img->noDims.y;
 	const int* data_ptr = idx_img->GetData(MEMORYDEVICE_CPU);
-<<<<<<< HEAD
 	//ofstream f(fileName, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 	//f << "P5\n" << width << " " << height << "\n65535\n";
 	for (int i = 0; i < height * width; ++i)
@@ -60,17 +52,5 @@ void gSLICr::engines::core_engine::Write_Seg_Res_To_PGM(const char* fileName)
 		//f.write((const char*)&lable_buffer, sizeof(ushort));
 	}
 	//f.close();
-=======
-
-	ofstream f(fileName, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-	f << "P5\n" << width << " " << height << "\n65535\n";
-	for (int i = 0; i < height * width; ++i)
-	{
-		ushort lable = (ushort)data_ptr[i];
-		ushort lable_buffer = (lable << 8 | lable >> 8);
-		f.write((const char*)&lable_buffer, sizeof(ushort));
-	}
-	f.close();
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
 }
 

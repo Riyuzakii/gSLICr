@@ -10,10 +10,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/opencv.hpp"
 
-<<<<<<< HEAD
-//#include "gSLICr_core_engine.h"
-=======
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
+
 
 
 using namespace std;
@@ -50,12 +47,9 @@ void load_image(const gSLICr::UChar4Image* inimg, Mat& outimg)
 
 int main()
 {
-<<<<<<< HEAD
 	cout << "hell";
 	VideoCapture cap("../sam1.webm");
-=======
-	VideoCapture cap(0);
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
+
 
 	if (!cap.isOpened()) 
 	{
@@ -66,7 +60,7 @@ int main()
 
 	// gSLICr settings
 	gSLICr::objects::settings my_settings;
-<<<<<<< HEAD
+
 	my_settings.img_size.x = 700;
 	my_settings.img_size.y = 700;
 	my_settings.no_segs = 750;
@@ -75,16 +69,7 @@ int main()
 	my_settings.no_iters = 5;
 	my_settings.color_space = gSLICr::CIELAB; // gSLICr::CIELAB for Lab, or gSLICr::RGB for RGB
 	my_settings.seg_method = gSLICr::GIVEN_NUM; // or gSLICr::GIVEN_NUM for given number
-=======
-	my_settings.img_size.x = 640;
-	my_settings.img_size.y = 480;
-	my_settings.no_segs = 2000;
-	my_settings.spixel_size = 16;
-	my_settings.coh_weight = 0.6f;
-	my_settings.no_iters = 5;
-	my_settings.color_space = gSLICr::XYZ; // gSLICr::CIELAB for Lab, or gSLICr::RGB for RGB
-	my_settings.seg_method = gSLICr::GIVEN_SIZE; // or gSLICr::GIVEN_NUM for given number
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
+
 	my_settings.do_enforce_connectivity = true; // whether or not run the enforce connectivity step
 
 	// instantiate a core_engine
@@ -95,7 +80,7 @@ int main()
 	gSLICr::UChar4Image* out_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
 
 	Size s(my_settings.img_size.x, my_settings.img_size.y);
-<<<<<<< HEAD
+
 	Size s1(640, 480);
 	Mat oldFrame, frame;
 	Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
@@ -218,11 +203,7 @@ int main()
 			
 			save_count++;
 		}*/
-=======
-			printf("\nsaved segmentation %04i\n", save_count);
-			save_count++;
-		}
->>>>>>> 7de441a3b2efd988d3937b80b53f0603d0d54400
+
 	}
 
 	destroyAllWindows();

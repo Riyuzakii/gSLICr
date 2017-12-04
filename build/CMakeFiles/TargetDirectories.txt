@@ -1,0 +1,7 @@
+/home/light/gSLICr/build/CMakeFiles/edit_cache.dir
+/home/light/gSLICr/build/CMakeFiles/rebuild_cache.dir
+/home/light/gSLICr/build/CMakeFiles/demo.dir
+/home/light/gSLICr/build/CMakeFiles/gSLICr_lib.dir
+/home/light/gSLICr/build/ORUtils/CMakeFiles/rebuild_cache.dir
+/home/light/gSLICr/build/ORUtils/CMakeFiles/edit_cache.dir
+/home/light/gSLICr/build/ORUtils/CMakeFiles/ORUtils.dir
