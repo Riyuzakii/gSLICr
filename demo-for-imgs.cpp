@@ -102,17 +102,17 @@ HsvColor RgbToHsv(RgbColor rgb)
 
 
 const int Slider_max = 100;
-int VMH_slider, VML_slider, Sat_slider;
-double VMH,VML,Sat;
-void on_trackbar( int, void* ){
-    VMH = (double) VMH_slider/Slider_max ;
+int value_slider, saturation_slider;
+double value,saturation;
+void on_trackbar( int, void* )
+{
+    value = (double) value_slider/Slider_max ;
 }
-void on_trackbar2( int, void* ){
-    VML = (double) VML_slider/Slider_max ;
+void on_trackbar2( int, void* )
+{
+    saturation = (double) saturation_slider/Slider_max ;
 }
-void on_trackbar3( int, void* ){
-    VML = (double) Sat_slider/Slider_max ;
-}
+
 std::string ToString(int val)
 {
     stringstream ss;
@@ -120,21 +120,32 @@ std::string ToString(int val)
     return ss.str();
 }
 
-
+void CallBackFunc(int event, int x, int y, int flags, void* userdata)
+{
+     if  ( event == EVENT_LBUTTONDOWN )
+     {
+          cout << 100*value<<" "<<100*saturation<< endl;
+          while(1){
+            if(event == EVENT_LBUTTONDOWN)
+                break;
+          }
+     }
+}
 
 int main()
 {
-    
     /*VideoCapture cap("../sam.webm");
+
+
     if (!cap.isOpened()) 
     {
         cerr << "unable to open camera!\n";
         return -1;
     }*/
     
-
     // gSLICr settings
     gSLICr::objects::settings my_settings;
+
     my_settings.img_size.x = 500;
     my_settings.img_size.y = 500;
     my_settings.no_segs = 250;
@@ -145,205 +156,160 @@ int main()
     my_settings.seg_method = gSLICr::GIVEN_NUM; // or gSLICr::GIVEN_NUM for given number
     my_settings.do_enforce_connectivity = true; // whether or not run the enforce connectivity step
 
+
     // instantiate a core_engine
     gSLICr::engines::core_engine* gSLICr_engine = new gSLICr::engines::core_engine(my_settings);
     gSLICr::UChar4Image* in_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
     gSLICr::UChar4Image* out_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
 
+
     Size s(my_settings.img_size.x, my_settings.img_size.y);
     Size s1(640, 480);
+
     Mat oldFrame, frame;
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
+    
+    ///Initiating Slider Launch
+    value_slider = 0;
+    saturation_slider = 0;
 
-
-    //Initiating trackbars
-    VMH_slider = 0;
-    VML_slider = 0;
-    Sat_slider = 0;
-    //Create Windows
-    namedWindow("ValueMeterHigh", 1);
-    namedWindow("ValueMeterLow", 2);
-    namedWindow("Saturation", 3);
+    /// Create Windows
+    namedWindow("Adjuster", 1);
     /// Create Trackbars
-    char vmh[50],vml[50],sat[50];
-    sprintf( vmh, "VMH x %d", Slider_max );
-    sprintf( vml, "VML x %d", Slider_max );
-    sprintf( sat, "Sat x %d", Slider_max );
+    char TrackbarName[50], TrackbarName2[50];
+    sprintf( TrackbarName, "Value x %d", Slider_max );
+    sprintf( TrackbarName2, "Saturation x %d", Slider_max );
+    createTrackbar( TrackbarName, "Adjuster", &value_slider, Slider_max, on_trackbar );
+    createTrackbar( TrackbarName2, "Adjuster", &saturation_slider, Slider_max, on_trackbar2 );
 
-    createTrackbar( vmh, "ValueMeterHigh", &VMH_slider, Slider_max, on_trackbar );
-    createTrackbar( vml, "ValueMeterLow", &VML_slider, Slider_max, on_trackbar2 );
-    createTrackbar( sat, "Saturation", &VML_slider, Slider_max, on_trackbar3 );
-
-    int key, save_count = 0,no_imgs;
-    cin>>no_imgs;
-//    while(1)
-    for(int i=1;i<=no_imgs;i++)    
+    int key, h=0;
+    cin>>h;
+        
+    while(1)
+    //for(int i=0;i<=h;i++)
     {
-
+        //h++;
         std::string first ("../dr2/");
         std::string sec (".png");
-        std::string mid = ToString(i);
+        std::string mid = ToString(h);
         std::string name;
         name=first+mid+sec;
-        VMH=0.56;
-        VML=0.22;
-        Sat=0.50;
         oldFrame = cv::imread(name);
-       
-
-        on_trackbar( VMH_slider, 0 );
-        on_trackbar2(VML_slider,0);
-        on_trackbar3(Sat_slider,0);
-
-
-        float blue_sum[my_settings.no_segs*(2)]={0},green_sum[my_settings.no_segs*(2)]={0},red_sum[my_settings.no_segs*(2)]={0};
-        int blue[my_settings.img_size.x][my_settings.img_size.y]={0};
-        int green[my_settings.img_size.x][my_settings.img_size.y]={0};
-        int red[my_settings.img_size.x][my_settings.img_size.y]={0};
-        int sum_x[my_settings.no_segs]={0},sum_y[my_settings.no_segs]={0};
-        int matrix[250000]={0};
+        
+        on_trackbar( value_slider, 0 );
+        on_trackbar2(saturation_slider,0);
+        //cout<<value<<"+"<<saturation<<"-\n";
+        float blue_sum[my_settings.no_segs*(2)] = {0};
+        float green_sum[my_settings.no_segs*(2)] = {0};
+        float red_sum[my_settings.no_segs*(2)] = {0};
+        int blue[my_settings.img_size.x][my_settings.img_size.y] = {0};
+        int green[my_settings.img_size.x][my_settings.img_size.y] = {0};
+        int red[my_settings.img_size.x][my_settings.img_size.y] = {0};
+        int sum_x[my_settings.no_segs] = {0};
+        int sum_y[my_settings.no_segs] = {0};
+        int matrix[250000] = {0};
         int count[200]={0};
+        
         pub_info *obj=(pub_info*)malloc(2*my_settings.no_segs*sizeof(pub_info));
-
         resize(oldFrame, frame, s);
+        
         load_image(frame, in_img);
         gSLICr_engine->Process_Frame(in_img);
         gSLICr_engine->Draw_Segmentation_Result(out_img);
         load_image(out_img, boundry_draw_frame);
-        //cv::namedWindow("Segmented Image(No averaging)",0);
-        //cv::imshow("Segmented Image(No averaging)", boundry_draw_frame);
+        //cv::namedWindow("tt",0);
+        //cv::imshow("tt", boundry_draw_frame);
+        cv::namedWindow("tt2",0);
         
-        //RGB-value matrix retrieval
         gSLICr_engine->Write_Seg_Res_To_PGM("abc",matrix);
         Mat M = frame;
-        Mat M2, M4;
-        Mat M3=frame;
-        RgbColor rgb_M3;
-        HsvColor hsv_M3;
-        HsvColor hsv_obj;
+        Mat M2;
         int lable;
 
-        //Extracting bgr-channels
+        ///Retrieving colour channels from the image
         for(int i=0;i<my_settings.img_size.x;i++)
         {
             for(int j=0;j<my_settings.img_size.y;j++)
             {
-                blue[i][j]=M.at<cv::Vec3b>(i,j)[0]; // b
-                green[i][j]=M.at<cv::Vec3b>(i,j)[1]; // g
-                red[i][j]=M.at<cv::Vec3b>(i,j)[2]; // r
+                blue[i][j] = M.at<cv::Vec3b>(i,j)[0]; // b
+                green[i][j] = M.at<cv::Vec3b>(i,j)[1]; // g
+                red[i][j] = M.at<cv::Vec3b>(i,j)[2]; // r
             }
         }
 
-        //Pixel-wise thresholding, without SLIC segmentation
-        for(int i=0;i<my_settings.img_size.x;i++)
-        {
-            for(int j=0;j<my_settings.img_size.y;j++)
-            {
-                rgb_M3.b=M3.at<cv::Vec3b>(i,j)[0]; // b
-                rgb_M3.g=M3.at<cv::Vec3b>(i,j)[1]; // g
-                rgb_M3.r=M3.at<cv::Vec3b>(i,j)[2]; // r
-                hsv_M3=RgbToHsv(rgb_M3);
-
-                if((hsv_M3.v>VMH*300 && hsv_M3.s<Sat*300))
-                    {
-                        M3.at<cv::Vec3b>(i,j)[0]=255*count[i];
-                            M3.at<cv::Vec3b>(i,j)[1]=255*count[i];
-                        M3.at<cv::Vec3b>(i,j)[2]=255*count[i];
-                        
-                    }                           
-                else
-                {
-                    M3.at<cv::Vec3b>(i,j)[0]=0;
-                        M3.at<cv::Vec3b>(i,j)[1]=0;
-                    M3.at<cv::Vec3b>(i,j)[2]=0;
-                }  
-            }
-        }
-        
-        //calculating the sum of color values of a segment in the image
+        ///Summing over the pixel values of all segments
         for(int i=0;i<my_settings.img_size.x*my_settings.img_size.y;i++)
         {
-            blue_sum[matrix[i]]+=blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
-            red_sum[matrix[i]]+=red[i/my_settings.img_size.x][i%my_settings.img_size.x];
-            green_sum[matrix[i]]+=green[i/my_settings.img_size.x][i%my_settings.img_size.x];
-            sum_x[matrix[i]]+= (i/my_settings.img_size.x);
+            blue_sum[matrix[i]]+= blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
+            red_sum[matrix[i]]+= red[i/my_settings.img_size.x][i%my_settings.img_size.x];
+            green_sum[matrix[i]]+= green[i/my_settings.img_size.x][i%my_settings.img_size.x];
+            sum_x[matrix[i]]+=  ( i/my_settings.img_size.x);
             sum_y[matrix[i]]+= (i%my_settings.img_size.x);
             count[matrix[i]]++;
         }
 
-        //Segment-wise thresholding, after SLIC and averaging of segment values
-        for(int i=0;i<my_settings.no_segs;i++)
+
+        for(int i=0;i<=my_settings.no_segs;i++)
         {
 
-                RgbColor rgb_obj;
-                rgb_obj.r=red_sum[i]/count[i] ;// r
-                rgb_obj.g=green_sum[i]/count[i] ;// r
-                rgb_obj.b=blue_sum[i]/count[i] ;// r
-                HsvColor hsv_obj= RgbToHsv(rgb_obj);
-                if((hsv_obj.v>VMH*300 && hsv_obj.s<Sat*300))
-                    {
-                        red_sum[i]=255*count[i];
-                        green_sum[i]=255*count[i];
-                        blue_sum[i]=255*count[i];
-                        lable=1;
-                    }                           
-                else
-                {
-                    red_sum[i]=0;
-                    green_sum[i]=0;
-                    blue_sum[i]=0;
-                    lable=0;
-                }   
-                if(int(rgb_obj.r)!=0)
-                    cout<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
+            RgbColor rgb_obj;
+            rgb_obj.r = red_sum[i]/count[i] ;// r
+            rgb_obj.g = green_sum[i]/count[i] ;// r
+            rgb_obj.b = blue_sum[i]/count[i] ;// r
+            HsvColor hsv_obj= RgbToHsv(rgb_obj);
+                
+            if(hsv_obj.v>value*300 && hsv_obj.s<saturation*300)
+                lable=1;                           
+            else
+                lable=0;
+                
+            red_sum[i] = lable*255*count[i];
+            green_sum[i] = lable*255*count[i];
+            blue_sum[i] = lable*255*count[i];
+                       
+            //if(int(rgb_obj.r)!= 0)
+              //  cout<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
         }
+        setMouseCallback("tt2", CallBackFunc, NULL);
 
-        //Updating for Prediction values recieved after ML--comment out otherwise
-/*        for(int i=0;i<my_settings.no_segs;i++)
-        {
-            red_sum[i]=newmat[i]*255*count[i];
-            green_sum[i]=newmat[i]*255*count[i];
-            blue_sum[i]=newmat[i]*255*count[i];
-        }
-*/
-
-
+        ///Re-inserting the average values back into the image
         for(int i=0;i<my_settings.img_size.y;i++)
         {
             for(int j=0;j<my_settings.img_size.x;j++)
             {
-                M.at<cv::Vec3b>(i,j)[0]=blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
-                M.at<cv::Vec3b>(i,j)[1]=green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
-                M.at<cv::Vec3b>(i,j)[2]=red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+                M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
+                M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
+                M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
             }
         }
-        // now compute all properties of pub_info obj[no_segs]
+
+        /// now compute all properties of pub_info obj[no_segs]
         for(int i=0;i<=my_settings.no_segs;i++)
         {
-            if(count[i]!=0){
-                        obj[i].size=count[i];
-                        obj[i].avg_colors[0]=(int)(blue_sum[i]/count[i]);
-                        obj[i].avg_colors[1]=(int)(green_sum[i]/count[i]);
-                        obj[i].avg_colors[2]=(int)(red_sum[i]/count[i]);
-                        obj[i].centre_x=(int)(sum_x[i]/count[i]);
-                        obj[i].centre_y=(int)(sum_y[i]/count[i]);
-                    }
+            if(count[i]!=0)
+            {
+                obj[i].size=count[i];
+                obj[i].avg_colors[0] = (int)(blue_sum[i]/count[i]);
+                obj[i].avg_colors[1] = (int)(green_sum[i]/count[i]);
+                obj[i].avg_colors[2] = (int)(red_sum[i]/count[i]);
+                obj[i].centre_x = (int)(sum_x[i]/count[i]);
+                obj[i].centre_y = (int)(sum_y[i]/count[i]);
+            }
         }
         
         resize(M, M2, s1);
-        resize(M3, M4, s1);
-//      cv::imshow("SegAveImg",0);
-//      cv::imshow("SegAveImg", M2);
-        cv::namedWindow("ThreshImg",0);
-        cv::imshow("ThreshImg",M2);
+        cv::imshow("tt2",M2);
 
-        cv::imwrite(name,M4);
+
+
         key = (char)waitKey(1);
         if (key == 27) break;
         free(obj);
-        //cout<<"This is the end of the line for UUUUUUUUUUUUUUUUUUUUUUUUUUUU......................."<<endl;
       
-      }
+      
+    }
+
+
     destroyAllWindows();
     return 0;
 }
