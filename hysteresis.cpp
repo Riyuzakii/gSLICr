@@ -188,18 +188,18 @@ int main()
     //Initiating Slider Launch
     Lvalue_slider = 0;
     Hvalue_slider = 0;
-    //Value_slider = 0;
+    Value_slider = 0;
     namedWindow("Adjuster", 1);
     char TrackbarName[50], TrackbarName2[50], TrackbarName3[50];
     sprintf( TrackbarName, "Lvalue x %d", Slider_max );
     sprintf( TrackbarName2, "Hvalue x %d", Slider_max );
-    //sprintf( TrackbarName3, "Value x %d", Slider_max );
+    sprintf( TrackbarName3, "Value x %d", Slider_max );
     createTrackbar( TrackbarName, "Adjuster", &Lvalue_slider, Slider_max, on_trackbar );
     createTrackbar( TrackbarName2, "Adjuster", &Hvalue_slider, Slider_max, on_trackbar2 );
-    //createTrackbar( TrackbarName3, "Adjuster", &Value_slider, Slider_max, on_trackbar );
+    createTrackbar( TrackbarName3, "Adjuster", &Value_slider, Slider_max, on_trackbar3 );
     on_trackbar( Lvalue_slider, 0 );
     on_trackbar2(Hvalue_slider,0);
-    //on_trackbar3(Value_slider,0);
+    on_trackbar3(Value_slider,0);
     double saturation=0.50;
     int key, h=0;
     cin>>h;
@@ -275,8 +275,9 @@ int main()
             rgb_obj.g = (green_sum[i]/count[i]) ;// r
             rgb_obj.b = (blue_sum[i]/count[i]) ;// r
             hsv hsv_obj= rgb2hsv(rgb_obj);
-            if((hsv_obj.v>Lvalue*255 && hsv_obj.v<Hvalue*255)){
-                prev_lable[i]=1;
+            if(hsv_obj.h>Value*360){
+                if((hsv_obj.v>Lvalue*255 && hsv_obj.v<Hvalue*255)){
+                    prev_lable[i]=1;
 
             }
             else if( hsv_obj.v>Hvalue*255)
@@ -286,7 +287,8 @@ int main()
                 }
             else
                 prev_lable[i]=0;
-            
+            }
+            else prev_lable[i]=0;
 
             //cout<<"("<<i<<") "<<int(hsv_obj.h)<<" "<<int(hsv_obj.s)<<" "<<int(hsv_obj.v)<<" "<<lable<<"\n";
 
