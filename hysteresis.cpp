@@ -114,7 +114,8 @@ void load_image(const gSLICr::UChar4Image* inimg, Mat& outimg)
 
 
 
-const int Slider_max = 100;
+const int Slider_max = 255;
+const int Hue_Slider_max = 360;
 int Lvalue_slider, Hvalue_slider,Value_slider;
 double Lvalue,Hvalue,Value;
 void on_trackbar( int, void* )
@@ -127,7 +128,7 @@ void on_trackbar2( int, void* )
 }
 void on_trackbar3( int, void* )
 {
-    Value = (double) Value_slider/Slider_max ;
+    Value = (double) Value_slider/Hue_Slider_max ;
 }
 std::string ToString(int val)
 {
@@ -164,7 +165,7 @@ int main()
 
     my_settings.img_size.x = 500;
     my_settings.img_size.y = 500;
-    my_settings.no_segs = 250;
+    my_settings.no_segs = 750;
     my_settings.spixel_size = 100;
     my_settings.coh_weight = 1.0f;
     my_settings.no_iters = 50;
@@ -184,7 +185,7 @@ int main()
 
     Mat oldFrame, frame;
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
-    
+    /*
     //Initiating Slider Launch
     Lvalue_slider = 0;
     Hvalue_slider = 0;
@@ -193,18 +194,22 @@ int main()
     char TrackbarName[50], TrackbarName2[50], TrackbarName3[50];
     sprintf( TrackbarName, "Lvalue x %d", Slider_max );
     sprintf( TrackbarName2, "Hvalue x %d", Slider_max );
-    sprintf( TrackbarName3, "Value x %d", Slider_max );
+    sprintf( TrackbarName3, "Value x %d", Hue_Slider_max );
     createTrackbar( TrackbarName, "Adjuster", &Lvalue_slider, Slider_max, on_trackbar );
     createTrackbar( TrackbarName2, "Adjuster", &Hvalue_slider, Slider_max, on_trackbar2 );
-    createTrackbar( TrackbarName3, "Adjuster", &Value_slider, Slider_max, on_trackbar3 );
+    createTrackbar( TrackbarName3, "Adjuster", &Value_slider, Hue_Slider_max, on_trackbar3 );
     on_trackbar( Lvalue_slider, 0 );
     on_trackbar2(Hvalue_slider,0);
     on_trackbar3(Value_slider,0);
-    double saturation=0.50;
+    double saturation=0.50;*/
     int key, h=0;
     cin>>h;
-                while(1){
-   
+    //Value = 136.8/100;
+    //Lvalue = 46/100;
+    //Hvalue=56/100;
+    cin>>Lvalue>>Hvalue>>Value;
+    //while(1){
+
     //for(int i=0;i<=h;i++)
     //{
         //h++;
@@ -254,7 +259,7 @@ int main()
                 red[i][j] = M.at<cv::Vec3b>(i,j)[2]; // r
             }
         }
-
+        cout<<Lvalue<<" "<<Hvalue<<" "<<Value<<endl;
         ///Summing over the pixel Lvalues of all segments
         for(int i=0;i<my_settings.img_size.x*my_settings.img_size.y;i++)
         {
@@ -265,7 +270,6 @@ int main()
             sum_y[matrix[i]]+= (i%my_settings.img_size.x);
             count[matrix[i]]++;
         }
-
         queue <int> clrbox;
         for(int i=0;i<my_settings.no_segs;i++)
         {
@@ -275,12 +279,12 @@ int main()
             rgb_obj.g = (green_sum[i]/count[i]) ;// r
             rgb_obj.b = (blue_sum[i]/count[i]) ;// r
             hsv hsv_obj= rgb2hsv(rgb_obj);
-            if(hsv_obj.h>Value*360){
-                if((hsv_obj.v>Lvalue*255 && hsv_obj.v<Hvalue*255)){
+            if(hsv_obj.h>Value){
+                if((hsv_obj.v>Lvalue && hsv_obj.v<Hvalue)){
                     prev_lable[i]=1;
 
             }
-            else if( hsv_obj.v>Hvalue*255)
+            else if( hsv_obj.v>Hvalue)
                 {
                     clrbox.push(i);
                     prev_lable[i]=2;
@@ -356,19 +360,102 @@ int main()
                 lable=1;
             else
                 lable=0;
-
-            red_sum[i] = lable*255*count[i];
-            green_sum[i] = lable*255*count[i];
-            blue_sum[i] = lable*255*count[i];
-                       
-            if(int(rgb_obj.r)> 0)
-                cout<<"("<<i<<") "<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
+            //cout<<prev_lable[i];
+            //red_sum[i] = lable*255*count[i];
+            //green_sum[i] = lable*255*count[i];
+            //blue_sum[i] = lable*255*count[i];
+            //cout<<lable<<",";
+            //if(int(rgb_obj.r)> 0)
+            //    cout<<"("<<i<<") "<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
 
 
         }
 
         setMouseCallback("FinalImg", CallBackFunc, NULL);
+       
 
+
+        for(int i=0;i<(my_settings.no_segs);i++)
+        {
+            int x = (int)(i/n);
+            int y = (int)(i%n);
+            //cout<<red_sum[i]/count[i]<<" "<<green_sum[i]/count[i]<<" "<<blue_sum[i]/count[i]<<" "<<endl;
+            if(x>=1 && y>=1 ){
+                cout<<int(red_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" "<<int(green_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" "<<int(blue_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" ";
+            }
+            else cout<<"0 0 0 ";
+
+            if(n*(x-1) + y>=0)
+            {
+                cout<<int(red_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" "<<int(green_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" "<<int(blue_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" ";
+            }
+            else cout<<"0 0 0 ";
+
+            if(n*(x-1) + y + 1>=0 && y!=n-1){
+                cout<<int(red_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" "<<int(green_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" "<<int(blue_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" ";
+            }
+            else cout<<"0 0 0 ";
+
+            if(i-1>=0 && y!=0){
+                cout<<int(red_sum[i-1]/count[i-1])<<" "<<int(green_sum[i-1]/count[i-1])<<" "<<int(blue_sum[i-1]/count[i-1])<<" ";
+            }
+            else cout<<"0 0 0 ";
+
+            cout<<int(red_sum[i]/count[i])<<" "<<int(green_sum[i]/count[i])<<" "<<int(blue_sum[i]/count[i])<<" ";
+
+            if(y!=n-1){
+                cout<<int(red_sum[i+1]/count[i+1])<<" "<<int(green_sum[i+1]/count[i+1])<<" "<<int(blue_sum[i+1]/count[i+1])<<" ";
+            }
+            else cout<<"0 0 0 ";
+
+            if(n*(x+1) + y -1<n*n && y!=0){
+                cout<<int(red_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" "<<int(green_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" "<<int(blue_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" ";
+            }
+            else cout<<"0 0 0 ";
+
+            if(n*(x+1) + y<n*n){
+                cout<<int(red_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" "<<int(green_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" "<<int(blue_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" ";
+            }
+            else cout<<"0 0 0 ";
+
+            if(n*(x+1) + y+1<n*n && y!=n-1){
+                cout<<int(red_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" "<<int(green_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" "<<int(blue_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" ";
+            }else cout<<"0 0 0 ";
+            if(prev_lable[i]==3)
+                cout<<"1";
+            else
+                cout<<"0";
+            cout<<endl;
+        }
+
+
+        for(int i=0;i<my_settings.no_segs;i++)
+        {
+            rgb rgb_obj;
+            rgb_obj.r = (red_sum[i]/count[i]) ;// r
+            rgb_obj.g = (green_sum[i]/count[i]) ;// g
+            rgb_obj.b = (blue_sum[i]/count[i]) ;// b
+            if(prev_lable[i]==3)
+                lable=1;
+            else
+                lable=0;
+
+            red_sum[i] = lable*255*count[i];
+            green_sum[i] = lable*255*count[i];
+            blue_sum[i] = lable*255*count[i];
+            //cout<<lable<<",";
+            //if(int(rgb_obj.r)> 0)
+            //    cout<<"("<<i<<") "<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
+
+
+        }
+        
+        /*int mask[]={0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        for(int i=0;i<my_settings.no_segs;i++){
+            red_sum[i] = mask[i]*255*count[i];
+            green_sum[i] = mask[i]*255*count[i];
+            blue_sum[i] = mask[i]*255*count[i];
+        }*/
         ///Re-inserting the average Lvalues back into the image
         for(int i=0;i<my_settings.img_size.y;i++)
         {
@@ -400,13 +487,13 @@ int main()
         //cv::imshow("FinalImg",M2);
         cv::namedWindow("Binary",5);
         cv::imshow("Binary",M3);
+        cv::imwrite("7.bmp",M3);
 
         free(obj);
-
-        key = (char)waitKey(1);
-        if (key == 27) break;
+        //key = (char)waitKey(1);
+        //if (key == 27) break;
         
-    }
+    
     destroyAllWindows();
     return 0;
 }
