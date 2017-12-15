@@ -207,6 +207,7 @@ int main()
     //Value = 136.8/100;
     //Lvalue = 46/100;
     //Hvalue=56/100;
+
     cin>>Lvalue>>Hvalue>>Value;
     //while(1){
 
@@ -297,6 +298,9 @@ int main()
             //cout<<"("<<i<<") "<<int(hsv_obj.h)<<" "<<int(hsv_obj.s)<<" "<<int(hsv_obj.v)<<" "<<lable<<"\n";
 
         }
+
+        n--;// for some reason
+
         while(!clrbox.empty())
         {
             int var = clrbox.front();
@@ -374,53 +378,51 @@ int main()
         setMouseCallback("FinalImg", CallBackFunc, NULL);
        
 
-
-        for(int i=0;i<(my_settings.no_segs);i++)
+        for(int i=0;i<676;i++)
         {
             int x = (int)(i/n);
             int y = (int)(i%n);
+            if(x==0 || x==n-1 || y==0 || y==n-1)continue;
             //cout<<red_sum[i]/count[i]<<" "<<green_sum[i]/count[i]<<" "<<blue_sum[i]/count[i]<<" "<<endl;
-            if(x>=1 && y>=1 ){
+            //if(x>=1 && y>=1 )
                 cout<<int(red_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" "<<int(green_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" "<<int(blue_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" ";
-            }
-            else cout<<"0 0 0 ";
+            
+            //else cout<<"0 0 0 ";
 
-            if(n*(x-1) + y>=0)
-            {
+           // if(n*(x-1) + y>=0)
                 cout<<int(red_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" "<<int(green_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" "<<int(blue_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" ";
-            }
-            else cout<<"0 0 0 ";
+            //else cout<<"0 0 0 ";
 
-            if(n*(x-1) + y + 1>=0 && y!=n-1){
+            //if(n*(x-1) + y + 1>=0 && y!=n-1)
                 cout<<int(red_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" "<<int(green_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" "<<int(blue_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" ";
-            }
-            else cout<<"0 0 0 ";
+    
+           // else cout<<"0 0 0 ";
 
-            if(i-1>=0 && y!=0){
+            //if(i-1>=0 && y!=0)
                 cout<<int(red_sum[i-1]/count[i-1])<<" "<<int(green_sum[i-1]/count[i-1])<<" "<<int(blue_sum[i-1]/count[i-1])<<" ";
-            }
-            else cout<<"0 0 0 ";
+            
+            //else cout<<"0 0 0 ";
 
             cout<<int(red_sum[i]/count[i])<<" "<<int(green_sum[i]/count[i])<<" "<<int(blue_sum[i]/count[i])<<" ";
 
-            if(y!=n-1){
+            //if(y!=n-1)
                 cout<<int(red_sum[i+1]/count[i+1])<<" "<<int(green_sum[i+1]/count[i+1])<<" "<<int(blue_sum[i+1]/count[i+1])<<" ";
-            }
-            else cout<<"0 0 0 ";
+            
+            //else cout<<"0 0 0 ";
 
-            if(n*(x+1) + y -1<n*n && y!=0){
+            //if(n*(x+1) + y -1<n*n && y!=0)
                 cout<<int(red_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" "<<int(green_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" "<<int(blue_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" ";
-            }
-            else cout<<"0 0 0 ";
+            
+            //else cout<<"0 0 0 ";
 
-            if(n*(x+1) + y<n*n){
+            //if(n*(x+1) + y<n*n)
                 cout<<int(red_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" "<<int(green_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" "<<int(blue_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" ";
-            }
-            else cout<<"0 0 0 ";
+            
+            //else cout<<"0 0 0 ";
 
-            if(n*(x+1) + y+1<n*n && y!=n-1){
+            //if(n*(x+1) + y+1<n*n && y!=n-1)
                 cout<<int(red_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" "<<int(green_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" "<<int(blue_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" ";
-            }else cout<<"0 0 0 ";
+            //else cout<<"0 0 0 ";
             if(prev_lable[i]==3)
                 cout<<"1";
             else
