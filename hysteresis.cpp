@@ -161,21 +161,6 @@ std::string ToString(int val)
 
 // ===============================================================
 
-
-void CallBackFunc(int event, int x, int y, int flags, void* userdata)
-{
-     if  ( event == EVENT_LBUTTONDOWN )
-     {
-          cout << 100*Lvalue<<" "<<100*Hvalue<< endl;
-          while(1){
-            if(event == EVENT_LBUTTONDOWN)
-                break;
-          }
-     }
-}
-
-// ===============================================================
-
 // =============== utility function to print all features for training data 
 
 void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
@@ -183,6 +168,24 @@ void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
     cout<<(int)(rs[n*x+y]/c[n*x+y])<<" ";
     cout<<(int)(bs[n*x+y]/c[n*x+y])<<" ";
     cout<<(int)(gs[n*x+y]/c[n*x+y])<<" ";
+}
+void masker(int mask[], float red_sum[], float blue_sum[], float green_sum[],int n){
+    int k=0;
+    for(int i=0;i<729;i++)
+        {
+            if(i/n==0 || i%n==0 || i/n==n-1 || i%n==n-1){
+                red_sum[i] =0;
+                green_sum[i] =0;
+                blue_sum[i] =0;
+            }
+            else {
+                red_sum[i] =mask[k]*255;
+                green_sum[i] =mask[k]*255;
+                blue_sum[i] =mask[k]*255;
+                k++;
+            }
+
+        }
 }
 
 int main()
@@ -271,7 +274,7 @@ int main()
         int sum_x[my_settings.no_segs] = {0};
         int sum_y[my_settings.no_segs] = {0};
         int matrix[250000] = {0};
-        int count[250]={0};
+        int count[750]={0};
         pub_info *obj=(pub_info*)malloc(2*my_settings.no_segs*sizeof(pub_info));
         int prev_lable[my_settings.no_segs]={0};
         int lable;
@@ -404,7 +407,6 @@ int main()
         }
     //  =====================================================================================================================================
         
-        setMouseCallback("FinalImg", CallBackFunc, NULL);
 
     // ================================================== printing the features with neighbouring cells and excluding the boundary cells 
 
@@ -429,37 +431,25 @@ int main()
             cout<<endl;
         }
 
-    // ===================================================================================================================================    
-
-        for(int i=0;i<my_settings.no_segs;i++)
-        {
-            rgb rgb_obj;
-            rgb_obj.r = (red_sum[i]/count[i]) ;// r
-            rgb_obj.g = (green_sum[i]/count[i]) ;// g
-            rgb_obj.b = (blue_sum[i]/count[i]) ;// b
-            if(prev_lable[i]==3)
-                lable=1;
-            else
-                lable=0;
-
-            red_sum[i] = lable*255*count[i];
-            green_sum[i] = lable*255*count[i];
-            blue_sum[i] = lable*255*count[i];
-
-
-        }
     
-    // =====================================================================================================================================
+    // =====================================================Fuction for masking prediction values===============================================
+        int mask[]={0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0};//Insert mask when needed
+        int size_mask=sizeof(mask)/sizeof(*mask);
+        if(size_mask!=0)
+            masker(mask,red_sum,blue_sum,green_sum,n);
     
     // ================================================== Re-inserting the average Lvalues back into the image =============================
 
-        for(int i=0;i<my_settings.img_size.y;i++)
+        //else
         {
-            for(int j=0;j<my_settings.img_size.x;j++)
+            for(int i=0;i<my_settings.img_size.y;i++)
             {
-                M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
-                M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
-                M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+                for(int j=0;j<my_settings.img_size.x;j++)
+                {
+                    M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]];//count[matrix[i*my_settings.img_size.x + j]];// b
+                    M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]];//count[matrix[i*my_settings.img_size.x + j]];// g
+                    M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]];//count[matrix[i*my_settings.img_size.x + j]];// r
+                }
             }
         }
 
@@ -488,8 +478,10 @@ int main()
         //cv::imshow("FinalImg",M2);
         cv::namedWindow("Binary",5);
         cv::imshow("Binary",M3);
-        cv::imwrite("7.bmp",M3);
-
+        std::string last (".bmp");
+        std::string newest;
+        newest = mid + last;
+        cv::imwrite(newest,M3);
         free(obj);
         //key = (char)waitKey(1);
         //if (key == 27) break;
