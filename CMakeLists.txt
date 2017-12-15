@@ -46,3 +46,7 @@ target_link_libraries(gSLICr_lib ${CUDA_LIBRARY})
 
 add_executable(demo demo.cpp)
 target_link_libraries(demo gSLICr_lib ${OpenCV_LIBS})
+add_executable(hysteresis hysteresis.cpp)
+target_link_libraries(hysteresis gSLICr_lib ${OpenCV_LIBS})
+add_executable(masker masker.cpp)
+target_link_libraries(masker gSLICr_lib ${OpenCV_LIBS})
