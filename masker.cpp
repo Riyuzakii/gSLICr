@@ -56,18 +56,8 @@ std::string ToString(int val)
 
 int main()
 {
-    /*VideoCapture cap("../sam.webm");
-
-
-    if (!cap.isOpened()) 
-    {
-        cerr << "unable to open camera!\n";
-        return -1;
-    }*/
-    
-    // gSLICr settings
+    // ========= Declaration of constant parameters
     gSLICr::objects::settings my_settings;
-
     my_settings.img_size.x = 500;
     my_settings.img_size.y = 500;
     my_settings.no_segs = 750;
@@ -77,28 +67,30 @@ int main()
     my_settings.color_space = gSLICr::CIELAB; // gSLICr::CIELAB for Lab, or gSLICr::RGB for RGB
     my_settings.seg_method = gSLICr::GIVEN_NUM; // or gSLICr::GIVEN_NUM for given number
     my_settings.do_enforce_connectivity = true; // whether or not run the enforce connectivity step
-    int n = int(sqrt(my_settings.no_segs));
-
-    // instantiate a core_engine
+    int n = int(sqrt(my_settings.no_segs));    // instantiate a core_engine
     gSLICr::engines::core_engine* gSLICr_engine = new gSLICr::engines::core_engine(my_settings);
     gSLICr::UChar4Image* in_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
     gSLICr::UChar4Image* out_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
-
-
     Size s(my_settings.img_size.x, my_settings.img_size.y);
     Size s1(640, 480);
 
-    Mat oldFrame, frame;
-    Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
-    int key, h=0;
-    cin>>h;
+    //======================================================================================
+
+    // ============ reading file name of the original unsegmented image 
+
+        Mat oldFrame, frame;
+        Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
+        int key, h=0;
+        cin>>h;
         std::string first ("../dr/");
         std::string sec (".png");
         std::string mid = ToString(h);
         std::string name;
         name=first+mid+sec;
         oldFrame = cv::imread(name);
-        //cout<<Lvalue<<"+"<<Hvalue<<"-\n";
+    // =====================================================================================
+    
+    // ============ Declaration of a few arrays to be used further     
         
         float blue_sum[my_settings.no_segs*(2)] = {0};
         float green_sum[my_settings.no_segs*(2)] = {0};
@@ -110,24 +102,26 @@ int main()
         int sum_y[my_settings.no_segs] = {0};
         int matrix[250000] = {0};
         int count[250]={0};
-        
-        resize(oldFrame, frame, s);
-        
+        int lable;
+        int prev_lable[my_settings.no_segs]={0};
+
+    // =====================================================================================   
+
+    // ============= processing and segmenting image 
+
+        resize(oldFrame, frame, s);      
         load_image(frame, in_img);
         gSLICr_engine->Process_Frame(in_img);
         gSLICr_engine->Draw_Segmentation_Result(out_img);
         load_image(out_img, boundry_draw_frame);
-        //cv::namedWindow("InitialImg",0);
-        //cv::imshow("InitialImg", frame);
-        //cv::namedWindow("FinalImg",0);
-        
         gSLICr_engine->Write_Seg_Res_To_PGM("abc",matrix);
         Mat M = frame;
         Mat M2,Mimg;
-        int lable;
-        int prev_lable[my_settings.no_segs]={0};
 
-        ///Retrieving colour channels from the jimage
+    //======================================================================================    
+
+    // ============  Retrieving colour channels from the image and storing them in repective arrays
+
         for(int i=0;i<my_settings.img_size.x;i++)
         {
             for(int j=0;j<my_settings.img_size.y;j++)
@@ -137,8 +131,10 @@ int main()
                 red[i][j] = M.at<cv::Vec3b>(i,j)[2]; // r
             }
         }
-        //cout<<Lvalue<<" "<<Hvalue<<" "<<Value<<endl;
-        ///Summing over the pixel Lvalues of all segments
+    // =====================================================================================
+
+    //================ Summing over the pixel Lvalues of all segments to repective sum arrays
+
         for(int i=0;i<my_settings.img_size.x*my_settings.img_size.y;i++)
         {
             blue_sum[matrix[i]]+= blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
@@ -148,26 +144,43 @@ int main()
             sum_y[matrix[i]]+= (i%my_settings.img_size.x);
             count[matrix[i]]++;
         }
-       n--;
-        int mask[]={0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0};
-        //cout<<sizeof(prev_lable)/sizeof(*prev_lable);
-        for(int i=0;i<729;i++){
-            if(i/n==0 || i%n==0 || i/n==n-1 || i%n==n-1)continue;
-            red_sum[i] =0;
-            green_sum[i] =0;
-            blue_sum[i] =0;
-            //cout<<prev_lable[i];
+    // ====================================================================================    
+       
+       n--;                 // ============ since the matrix of superpixels is of the size (n-1) X (n-1)
+
+    // =========== Masking the final Image for the hardcoded mask array 
+       int k=0;
+        int mask[]={0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0};
+        for(int i=0;i<729;i++)
+        {
+            if(i/n==0 || i%n==0 || i/n==n-1 || i%n==n-1){
+                red_sum[i] =0;
+                green_sum[i] =0;
+                blue_sum[i] =0;
+            }
+            else {
+                red_sum[i] =mask[k]*255;
+                green_sum[i] =mask[k]*255;
+                blue_sum[i] =mask[k]*255;
+                k++;
+            }
+
         }
-        ///Re-inserting the average Lvalues back into the image
+    // ==================================================================================== 
+
+    // ============ Re-inserting the average Lvalues back into the image
         for(int i=0;i<my_settings.img_size.y;i++)
         {
             for(int j=0;j<my_settings.img_size.x;j++)
             {
-                M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
-                M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
-                M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+                M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]];// b
+                M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]];// g
+                M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]];// r
             }
         }
+    // ===================================================================================
+    
+    // ====================== Displaying the image and/or writing it.    
         Mat M3;
         resize(M, M3, s1);
         //cv::imshow("FinalImg",M2);
@@ -177,6 +190,7 @@ int main()
         string newest;
         newest = mid + newname;
         cv::imwrite(newest,M3);
+    // ====================================================================================    
 
     destroyAllWindows();
     return 0;
