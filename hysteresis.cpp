@@ -24,14 +24,21 @@ typedef struct {
     double b;       // a fraction between 0 and 1
 } rgb;
 
+// ===============================================================
+
 typedef struct {
     double h;       // angle in degrees
     double s;       // a fraction between 0 and 1
     double v;       // a fraction between 0 and 1
 } hsv;
 
+// ===============================================================
+
 static hsv   rgb2hsv(rgb in);
 static rgb   hsv2rgb(hsv in);
+
+// ===============================================================
+
 
 hsv rgb2hsv(rgb in)
 {
@@ -76,6 +83,9 @@ hsv rgb2hsv(rgb in)
 
     return out;
 }
+
+// ===============================================================
+
 struct pub_info
 {
     float centre_x;
@@ -83,6 +93,8 @@ struct pub_info
     float avg_colors[3];
     float size;
 };
+
+// ===============================================================
 
 void load_image(const Mat& inimg, gSLICr::UChar4Image* outimg)
 {
@@ -98,6 +110,8 @@ void load_image(const Mat& inimg, gSLICr::UChar4Image* outimg)
         }
 }
 
+// ===============================================================
+
 void load_image(const gSLICr::UChar4Image* inimg, Mat& outimg)
 {
     const gSLICr::Vector4u* inimg_ptr = inimg->GetData(MEMORYDEVICE_CPU);
@@ -112,12 +126,17 @@ void load_image(const gSLICr::UChar4Image* inimg, Mat& outimg)
         }
 }
 
+// ===============================================================
 
+// Declaring some constants of the sliders
 
 const int Slider_max = 255;
 const int Hue_Slider_max = 360;
 int Lvalue_slider, Hvalue_slider,Value_slider;
 double Lvalue,Hvalue,Value;
+
+// ==================Trcakbar functions======================
+
 void on_trackbar( int, void* )
 {
     Lvalue = (double) Lvalue_slider/Slider_max ;
@@ -130,12 +149,18 @@ void on_trackbar3( int, void* )
 {
     Value = (double) Value_slider/Hue_Slider_max ;
 }
+
+// ==================utility functions=========================
+
 std::string ToString(int val)
 {
     stringstream ss;
     ss<<val;
     return ss.str();
 }
+
+// ===============================================================
+
 
 void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 {
@@ -149,6 +174,17 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
      }
 }
 
+// ===============================================================
+
+// =============== utility function to print all features for training data 
+
+void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
+{
+    cout<<(int)(rs[n*x+y]/c[n*x+y])<<" ";
+    cout<<(int)(bs[n*x+y]/c[n*x+y])<<" ";
+    cout<<(int)(gs[n*x+y]/c[n*x+y])<<" ";
+}
+
 int main()
 {
     /*VideoCapture cap("../sam.webm");
@@ -160,9 +196,9 @@ int main()
         return -1;
     }*/
     
-    // gSLICr settings
-    gSLICr::objects::settings my_settings;
+    // ====================================================== gSLICr settings  ===================================================
 
+    gSLICr::objects::settings my_settings;
     my_settings.img_size.x = 500;
     my_settings.img_size.y = 500;
     my_settings.no_segs = 750;
@@ -174,7 +210,11 @@ int main()
     my_settings.do_enforce_connectivity = true; // whether or not run the enforce connectivity step
     int n = int(sqrt(my_settings.no_segs));
 
-    // instantiate a core_engine
+    // ===========================================================================================================================
+
+
+    // ============================================= instantiate a core_engine ===================================================
+
     gSLICr::engines::core_engine* gSLICr_engine = new gSLICr::engines::core_engine(my_settings);
     gSLICr::UChar4Image* in_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
     gSLICr::UChar4Image* out_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
@@ -185,8 +225,10 @@ int main()
 
     Mat oldFrame, frame;
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
+    
+    // ==================================================================         Initiating Slider Launch and remove the manual input below
+
     /*
-    //Initiating Slider Launch
     Lvalue_slider = 0;
     Hvalue_slider = 0;
     Value_slider = 0;
@@ -202,25 +244,23 @@ int main()
     on_trackbar2(Hvalue_slider,0);
     on_trackbar3(Value_slider,0);
     double saturation=0.50;*/
-    int key, h=0;
-    cin>>h;
-    //Value = 136.8/100;
-    //Lvalue = 46/100;
-    //Hvalue=56/100;
 
-    cin>>Lvalue>>Hvalue>>Value;
-    //while(1){
+    //  ================================================== Input the file number h and the respective thresholds  LValue , Hvalue and Value
 
-    //for(int i=0;i<=h;i++)
-    //{
-        //h++;
+        int key, h=0;
+        cin>>h;
+        cin>>Lvalue>>Hvalue>>Value;
+
+    // =================Reading the frame according to the name===========================================================================
+
         std::string first ("../dr/");
         std::string sec (".png");
         std::string mid = ToString(h);
         std::string name;
         name=first+mid+sec;
         oldFrame = cv::imread(name);
-        //cout<<Lvalue<<"+"<<Hvalue<<"-\n";
+
+    // =================Declaration pf few arrays to be used further=========================================================================    
         
         float blue_sum[my_settings.no_segs*(2)] = {0};
         float green_sum[my_settings.no_segs*(2)] = {0};
@@ -232,25 +272,26 @@ int main()
         int sum_y[my_settings.no_segs] = {0};
         int matrix[250000] = {0};
         int count[250]={0};
-        
         pub_info *obj=(pub_info*)malloc(2*my_settings.no_segs*sizeof(pub_info));
+        int prev_lable[my_settings.no_segs]={0};
+        int lable;
+
+    // =====================================================================================================================================
+
         resize(oldFrame, frame, s);
-        
         load_image(frame, in_img);
         gSLICr_engine->Process_Frame(in_img);
         gSLICr_engine->Draw_Segmentation_Result(out_img);
         load_image(out_img, boundry_draw_frame);
-        //cv::namedWindow("InitialImg",0);
-        //cv::imshow("InitialImg", frame);
-        //cv::namedWindow("FinalImg",0);
-        
         gSLICr_engine->Write_Seg_Res_To_PGM("abc",matrix);
         Mat M = frame;
         Mat M2,Mimg;
-        int lable;
-        int prev_lable[my_settings.no_segs]={0};
 
-        ///Retrieving colour channels from the jimage
+    // =====================================================================================================================================
+
+
+    //  ==============================================   Retrieving colour channels from the image ========================================
+
         for(int i=0;i<my_settings.img_size.x;i++)
         {
             for(int j=0;j<my_settings.img_size.y;j++)
@@ -260,8 +301,11 @@ int main()
                 red[i][j] = M.at<cv::Vec3b>(i,j)[2]; // r
             }
         }
-        cout<<Lvalue<<" "<<Hvalue<<" "<<Value<<endl;
-        ///Summing over the pixel Lvalues of all segments
+
+    // =====================================================================================================================================    
+
+    // ================================================== Summing over the pixel Lvalues of all segments ===================================
+
         for(int i=0;i<my_settings.img_size.x*my_settings.img_size.y;i++)
         {
             blue_sum[matrix[i]]+= blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
@@ -271,6 +315,9 @@ int main()
             sum_y[matrix[i]]+= (i%my_settings.img_size.x);
             count[matrix[i]]++;
         }
+
+    // ======================================== Placing in a queue for hysterisis threhsolding =========================================================
+
         queue <int> clrbox;
         for(int i=0;i<my_settings.no_segs;i++)
         {
@@ -294,12 +341,13 @@ int main()
                 prev_lable[i]=0;
             }
             else prev_lable[i]=0;
-
-            //cout<<"("<<i<<") "<<int(hsv_obj.h)<<" "<<int(hsv_obj.s)<<" "<<int(hsv_obj.v)<<" "<<lable<<"\n";
-
         }
 
-        n--;// for some reason
+    // ==========================================================================================================================================
+
+        n--;   // ================================================== because matrix is of size (n-1) X (n-1)
+
+    // ================================= Processing the queue for Hysterisis =============================================================    
 
         while(!clrbox.empty())
         {
@@ -354,75 +402,26 @@ int main()
             }
 
         }
-        for(int i=0;i<my_settings.no_segs;i++)
-        {
-            rgb rgb_obj;
-            rgb_obj.r = (red_sum[i]/count[i]) ;// r
-            rgb_obj.g = (green_sum[i]/count[i]) ;// g
-            rgb_obj.b = (blue_sum[i]/count[i]) ;// b
-            if(prev_lable[i]==3)
-                lable=1;
-            else
-                lable=0;
-            //cout<<prev_lable[i];
-            //red_sum[i] = lable*255*count[i];
-            //green_sum[i] = lable*255*count[i];
-            //blue_sum[i] = lable*255*count[i];
-            //cout<<lable<<",";
-            //if(int(rgb_obj.r)> 0)
-            //    cout<<"("<<i<<") "<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
-
-
-        }
-
+    //  =====================================================================================================================================
+        
         setMouseCallback("FinalImg", CallBackFunc, NULL);
-       
+
+    // ================================================== printing the features with neighbouring cells and excluding the boundary cells 
 
         for(int i=0;i<676;i++)
         {
             int x = (int)(i/n);
             int y = (int)(i%n);
             if(x==0 || x==n-1 || y==0 || y==n-1)continue;
-            //cout<<red_sum[i]/count[i]<<" "<<green_sum[i]/count[i]<<" "<<blue_sum[i]/count[i]<<" "<<endl;
-            //if(x>=1 && y>=1 )
-                cout<<int(red_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" "<<int(green_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" "<<int(blue_sum[n*(x-1) + y-1]/count[n*(x-1) + y-1])<<" ";
-            
-            //else cout<<"0 0 0 ";
-
-           // if(n*(x-1) + y>=0)
-                cout<<int(red_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" "<<int(green_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" "<<int(blue_sum[n*(x-1)+y]/count[n*(x-1)+y])<<" ";
-            //else cout<<"0 0 0 ";
-
-            //if(n*(x-1) + y + 1>=0 && y!=n-1)
-                cout<<int(red_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" "<<int(green_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" "<<int(blue_sum[n*(x-1)+y+1]/count[n*(x-1)+y+1])<<" ";
-    
-           // else cout<<"0 0 0 ";
-
-            //if(i-1>=0 && y!=0)
-                cout<<int(red_sum[i-1]/count[i-1])<<" "<<int(green_sum[i-1]/count[i-1])<<" "<<int(blue_sum[i-1]/count[i-1])<<" ";
-            
-            //else cout<<"0 0 0 ";
-
-            cout<<int(red_sum[i]/count[i])<<" "<<int(green_sum[i]/count[i])<<" "<<int(blue_sum[i]/count[i])<<" ";
-
-            //if(y!=n-1)
-                cout<<int(red_sum[i+1]/count[i+1])<<" "<<int(green_sum[i+1]/count[i+1])<<" "<<int(blue_sum[i+1]/count[i+1])<<" ";
-            
-            //else cout<<"0 0 0 ";
-
-            //if(n*(x+1) + y -1<n*n && y!=0)
-                cout<<int(red_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" "<<int(green_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" "<<int(blue_sum[n*(x+1)+y-1]/count[n*(x+1)+y-1])<<" ";
-            
-            //else cout<<"0 0 0 ";
-
-            //if(n*(x+1) + y<n*n)
-                cout<<int(red_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" "<<int(green_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" "<<int(blue_sum[n*(x+1)+y]/count[n*(x+1)+y])<<" ";
-            
-            //else cout<<"0 0 0 ";
-
-            //if(n*(x+1) + y+1<n*n && y!=n-1)
-                cout<<int(red_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" "<<int(green_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" "<<int(blue_sum[n*(x+1)+y+1]/count[n*(x+1)+y+1])<<" ";
-            //else cout<<"0 0 0 ";
+            print(red_sum, green_sum, blue_sum, count, x-1,y-1,n);
+            print(red_sum, green_sum, blue_sum, count, x-1,y,n);
+            print(red_sum, green_sum, blue_sum, count, x-1,y+1,n);
+            print(red_sum, green_sum, blue_sum, count, x,y-1,n);
+            print(red_sum, green_sum, blue_sum, count, x,y,n);
+            print(red_sum, green_sum, blue_sum, count, x,y+1,n);
+            print(red_sum, green_sum, blue_sum, count, x+1,y-1,n);
+            print(red_sum, green_sum, blue_sum, count, x+1,y,n);
+            print(red_sum, green_sum, blue_sum, count, x+1,y+1,n);
             if(prev_lable[i]==3)
                 cout<<"1";
             else
@@ -430,6 +429,7 @@ int main()
             cout<<endl;
         }
 
+    // ===================================================================================================================================    
 
         for(int i=0;i<my_settings.no_segs;i++)
         {
@@ -445,20 +445,14 @@ int main()
             red_sum[i] = lable*255*count[i];
             green_sum[i] = lable*255*count[i];
             blue_sum[i] = lable*255*count[i];
-            //cout<<lable<<",";
-            //if(int(rgb_obj.r)> 0)
-            //    cout<<"("<<i<<") "<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
 
 
         }
-        
-        /*int mask[]={0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        for(int i=0;i<my_settings.no_segs;i++){
-            red_sum[i] = mask[i]*255*count[i];
-            green_sum[i] = mask[i]*255*count[i];
-            blue_sum[i] = mask[i]*255*count[i];
-        }*/
-        ///Re-inserting the average Lvalues back into the image
+    
+    // =====================================================================================================================================
+    
+    // ================================================== Re-inserting the average Lvalues back into the image =============================
+
         for(int i=0;i<my_settings.img_size.y;i++)
         {
             for(int j=0;j<my_settings.img_size.x;j++)
@@ -468,8 +462,11 @@ int main()
                 M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
             }
         }
-        
-        /// now compute all properties of pub_info obj[no_segs]
+
+    // ======================================================================================================================================
+
+    // ================================================== now compute all properties of pub_info obj[no_segs] if needed 
+    /*    
         for(int i=0;i<=my_settings.no_segs;i++)
         {
             if(count[i]!=0)
@@ -482,6 +479,8 @@ int main()
                 obj[i].centre_y = (int)(sum_y[i]/count[i]);
             }
         }
+    */
+    //==================================Finally displaying and/or showing the image after resizing===========================================================    
         
         Canny( M, M2, 100, 180, 3);
         Mat M3;
