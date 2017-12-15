@@ -1,2 +1,0 @@
-/usr/bin/ar qc libgSLICr_lib.a  CMakeFiles/gSLICr_lib.dir/gSLICr_Lib/engines/gSLICr_core_engine.cpp.o CMakeFiles/gSLICr_lib.dir/gSLICr_Lib/engines/gSLICr_seg_engine.cpp.o CMakeFiles/gSLICr_lib.dir/gSLICr_Lib/engines/gSLICr_lib_generated_gSLICr_seg_engine_GPU.cu.o
-/usr/bin/ranlib libgSLICr_lib.a

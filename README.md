@@ -1,5 +1,5 @@
 # gSLICr: SLIC superpixels at over 250Hz
-
+# This repo is for my own use at the moment, clone at your own risk!!
 ![sample](sample.bmp)
 
 This is the software bundle "gSLICr", a library for real-time superpixel segmentation written in C++ and CUDA. The current version is maintained by:
