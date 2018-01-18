@@ -1,6 +1,7 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of gSLICr
 /*
-        creates a mask as per given values of 0s and 1s from train.py  and displaqys the image 
+        creates a mask as per given values of 0s and 1s from train.py  and then fits the curve with a spline to connect discrete parts of the lane
+        
 */
 #include <iostream>
 #include <time.h>
@@ -12,6 +13,7 @@
 #include "NVTimer.h"
 #include <queue>
 #include <vector>
+#include<iomanip>
 #include <cmath>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/core/core.hpp"
@@ -57,6 +59,80 @@ std::string ToString(int val)
     ss<<val;
     return ss.str();
 }
+vector <int > splx1;
+vector<int > splx2;
+vector <pair<int,int> > sply1;
+vector<pair<int,int> > sply2;
+static int mask2d[24][24];
+void spline(int N, vector<pair<int,int> >& eqn, vector<int>& loop)
+{
+    int i,j,k,n;
+    cout.precision(4);                        //set precision
+    cout.setf(ios::fixed);
+    double x[N],y[N];
+    for(int i=0;i<N;i++){
+        x[i]=eqn[i].first;
+    }
+    for(int i=0;i<N;i++){
+        y[i]=eqn[i].second;
+    }
+    n=3;                                // n is the degree of Polynomial 
+    double X[2*n+1];                        //Array that will store the values of sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+    for (i=0;i<2*n+1;i++)
+    {
+        X[i]=0;
+        for (j=0;j<N;j++)
+            X[i]=X[i]+pow(x[j],i);        //consecutive positions of the array will store N,sigma(xi),sigma(xi^2),sigma(xi^3)....sigma(xi^2n)
+    }
+    double B[n+1][n+2],a[n+1];            //B is the Normal matrix(augmented) that will store the equations, 'a' is for value of the final coefficients
+    for (i=0;i<=n;i++)
+        for (j=0;j<=n;j++)
+            B[i][j]=X[i+j];            //Build the Normal matrix by storing the corresponding coefficients at the right positions except the last column of the matrix
+    double Y[n+1];                    //Array to store the values of sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+    for (i=0;i<n+1;i++)
+    {    
+        Y[i]=0;
+        for (j=0;j<N;j++)
+        Y[i]=Y[i]+pow(x[j],i)*y[j];        //consecutive positions will store sigma(yi),sigma(xi*yi),sigma(xi^2*yi)...sigma(xi^n*yi)
+    }
+    for (i=0;i<=n;i++)
+        B[i][n+1]=Y[i];                //load the values of Y as the last column of B(Normal Matrix but augmented)
+    n=n+1; 
+    for (i=0;i<n;i++)                    //From now Gaussian Elimination starts(can be ignored) to solve the set of linear equations (Pivotisation)
+        for (k=i+1;k<n;k++)
+            if (B[i][i]<B[k][i])
+                for (j=0;j<=n;j++)
+                {
+                    double temp=B[i][j];
+                    B[i][j]=B[k][j];
+                    B[k][j]=temp;
+                }
+    
+    for (i=0;i<n-1;i++)            //loop to perform the gauss elimination
+        for (k=i+1;k<n;k++)
+            {
+                double t=B[k][i]/B[i][i];
+                for (j=0;j<=n;j++)
+                    B[k][j]=B[k][j]-t*B[i][j];    //make the elements below the pivot elements equal to zero or elimnate the variables
+            }
+    for (i=n-1;i>=0;i--)                //back-substitution
+    {                        //x is an array whose values correspond to the values of x,y,z..
+        a[i]=B[i][n];                //make the variable to be calculated equal to the rhs of the last equation
+        for (j=0;j<n;j++)
+            if (j!=i)            //then subtract all the lhs values except the coefficient of the variable whose value                                   is being calculated
+                a[i]=a[i]-B[i][j]*a[j];
+        a[i]=a[i]/B[i][i];            //now finally divide the rhs by the coefficient of the variable to be calculated
+    }
+    for(int k=0;k<loop.size();k++){
+        int j,i;
+        i=loop[k];
+        double jj= a[0] + a[1]*i + a[2]*i*i + a[3]*i*i*i;
+        j=int(jj);
+        if(mask2d[i][j]==0 && j<24){
+            mask2d[i][j]=1;
+        }
+    }
+}
 
 int main()
 {
@@ -76,7 +152,7 @@ int main()
     gSLICr::UChar4Image* in_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
     gSLICr::UChar4Image* out_img = new gSLICr::UChar4Image(my_settings.img_size, true, true);
     Size s(my_settings.img_size.x, my_settings.img_size.y);
-    Size s1(500,500);
+    Size s1(640, 480);
 
     //======================================================================================
 
@@ -105,7 +181,7 @@ int main()
         int sum_x[my_settings.no_segs] = {0};
         int sum_y[my_settings.no_segs] = {0};
         int matrix[250000] = {0};
-        int count[750]={0};
+        int count[250]={0};
         int lable;
         int prev_lable[my_settings.no_segs]={0};
 
@@ -148,14 +224,53 @@ int main()
             sum_y[matrix[i]]+= (i%my_settings.img_size.x);
             count[matrix[i]]++;
         }
-    // ====================================================================================    
        
        n--;                 // ============ since the matrix of superpixels is of the size (n-1) X (n-1)
 
     // =========== Masking the final Image for the hardcoded mask array 
         int k=0;
-        int mask[]={0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        int mask2d[24][24];
+        static int mask[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        
+        for(int i=0;i<24;i++){
+            for(int j=0;j<24;j++){
+                mask2d[i][j]=mask[i*24+j];
+                cout<<mask2d[i][j]<<", ";
+            }
+           cout<<endl;
+        }
+        int N,flag1,flag2;
+        cout<<endl;
+        for(int i=0;i<24;i++){
+            flag1=0;
+            for(int j=0;j<12;j++){
+                if(mask2d[i][j]==1){
+                    sply1.push_back(make_pair(i,j));
+                    flag1=1;
+                }
+                if(flag1==1)
+                    break;
+            }
+            if(flag1==0)
+                splx1.push_back(i);
+        }
+        for(int i=0;i<24;i++){
+            flag2=0;
+            for(int j=12;j<24;j++){
+                if(mask2d[i][j]==1){
+                    sply2.push_back(make_pair(i,j));
+                    flag2=1;
+                }
+                if(flag2==1)
+                    break;
+            }
+            if(flag2==0)
+                splx2.push_back(i);
+        }
+        cout << flush;
+        spline(sply1.size(), sply1, splx1);
+        spline(sply2.size(), sply2, splx2);
+
+        
         for(int i=0;i<24;i++){
             for(int j=0;j<24;j++){
                 mask2d[i][j]=mask[i*24+j];
@@ -163,7 +278,12 @@ int main()
             }
             cout<<endl;
         }
-        for(int i=0;i<676;i++)
+        for(int i=0;i<24;i++){
+            for(int j=0;j<24;j++){
+                mask[i*24+j]=mask2d[i][j];
+            }
+        }
+        for(int i=0;i<729;i++)
         {
             if(i/n==0 || i%n==0 || i/n==n-1 || i%n==n-1){
                 red_sum[i] =0;
@@ -185,8 +305,6 @@ int main()
         {
             for(int j=0;j<my_settings.img_size.x;j++)
             {
-                //if(blue_sum[matrix[i*my_settings.img_size.x+j]]!=0)
-                  //  cout<<matrix[i*my_settings.img_size.x+j]<<endl;
                 M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]];// b
                 M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]];// g
                 M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]];// r
