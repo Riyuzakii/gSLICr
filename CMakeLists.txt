@@ -56,7 +56,9 @@ add_executable(demo2 demo2.cpp)
 target_link_libraries(demo2 gSLICr_lib ${OpenCV_LIBS})
 add_executable(demo-for-imgs demo-for-imgs.cpp)
 target_link_libraries(demo-for-imgs gSLICr_lib ${OpenCV_LIBS})
+<<<<<<< HEAD
 add_executable(splfitter splfitter.cpp)
 target_link_libraries(splfitter gSLICr_lib ${OpenCV_LIBS})
 add_executable(ultTrainer ultTrainer.cpp)
 target_link_libraries(ultTrainer gSLICr_lib ${OpenCV_LIBS})
+

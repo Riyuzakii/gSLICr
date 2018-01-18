@@ -234,12 +234,12 @@ int main()
         for(int i=0;i<24;i++){
             for(int j=0;j<24;j++){
                 mask2d[i][j]=mask[i*24+j];
-                cout<<mask2d[i][j]<<", ";
+                //cout<<mask2d[i][j]<<", ";
             }
-           cout<<endl;
+//            cout<<endl;
         }
         int N,flag1,flag2;
-        cout<<endl;
+        
         for(int i=0;i<24;i++){
             flag1=0;
             for(int j=0;j<12;j++){
@@ -270,14 +270,6 @@ int main()
         spline(sply1.size(), sply1, splx1);
         spline(sply2.size(), sply2, splx2);
 
-        
-        for(int i=0;i<24;i++){
-            for(int j=0;j<24;j++){
-                mask2d[i][j]=mask[i*24+j];
-                cout<<mask2d[i][j]<<", ";
-            }
-            cout<<endl;
-        }
         for(int i=0;i<24;i++){
             for(int j=0;j<24;j++){
                 mask[i*24+j]=mask2d[i][j];
