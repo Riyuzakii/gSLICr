@@ -168,7 +168,7 @@ int main(int argc, char** argv)
     my_settings.no_segs = 750;
     my_settings.spixel_size = 100;
     my_settings.coh_weight = 1.0f;
-    my_settings.no_iters = 50;
+    my_settings.no_iters = 5;
     my_settings.color_space = gSLICr::CIELAB; // gSLICr::CIELAB for Lab, or gSLICr::RGB for RGB
     my_settings.seg_method = gSLICr::GIVEN_NUM; // or gSLICr::GIVEN_NUM for given number
     my_settings.do_enforce_connectivity = true; // whether or not run the enforce connectivity step
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
         //for(int i=0;i<=h;i++)
         //{
         //h++;
-        std::string first ("../dr/");
+        std::string first ("../dr3/");
         std::string sec (".png");
         std::string mid = ToString(h);
         std::string name;

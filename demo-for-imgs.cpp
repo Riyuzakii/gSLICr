@@ -1,4 +1,7 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of gSLICr
+/*
+    This file produces the segmented image after averaging.
+*/
 #include <iostream>
 #include <time.h>
 #include <stdio.h>
@@ -100,19 +103,6 @@ HsvColor RgbToHsv(RgbColor rgb)
     return hsv;
 }
 
-
-const int Slider_max = 100;
-int value_slider, saturation_slider;
-double value,saturation;
-void on_trackbar( int, void* )
-{
-    value = (double) value_slider/Slider_max ;
-}
-void on_trackbar2( int, void* )
-{
-    saturation = (double) saturation_slider/Slider_max ;
-}
-
 std::string ToString(int val)
 {
     stringstream ss;
@@ -120,30 +110,8 @@ std::string ToString(int val)
     return ss.str();
 }
 
-void CallBackFunc(int event, int x, int y, int flags, void* userdata)
-{
-     if  ( event == EVENT_LBUTTONDOWN )
-     {
-          cout << 100*value<<" "<<100*saturation<< endl;
-          while(1){
-            if(event == EVENT_LBUTTONDOWN)
-                break;
-          }
-     }
-}
-
 int main()
 {
-    /*VideoCapture cap("../sam.webm");
-
-
-    if (!cap.isOpened()) 
-    {
-        cerr << "unable to open camera!\n";
-        return -1;
-    }*/
-    
-    // gSLICr settings
     gSLICr::objects::settings my_settings;
 
     my_settings.img_size.x = 500;
@@ -169,19 +137,7 @@ int main()
     Mat oldFrame, frame;
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
     
-    ///Initiating Slider Launch
-    value_slider = 0;
-    saturation_slider = 0;
-
-    /// Create Windows
-    namedWindow("Adjuster", 1);
-    /// Create Trackbars
-    char TrackbarName[50], TrackbarName2[50];
-    sprintf( TrackbarName, "Value x %d", Slider_max );
-    sprintf( TrackbarName2, "Saturation x %d", Slider_max );
-    createTrackbar( TrackbarName, "Adjuster", &value_slider, Slider_max, on_trackbar );
-    createTrackbar( TrackbarName2, "Adjuster", &saturation_slider, Slider_max, on_trackbar2 );
-
+    
     int key, h=0;
     cin>>h;
         
@@ -189,16 +145,14 @@ int main()
     //for(int i=0;i<=h;i++)
     {
         //h++;
-        std::string first ("../dr2/");
+        std::string first ("../dr/");
         std::string sec (".png");
         std::string mid = ToString(h);
-        std::string name;
+        std::string name,newname;
         name=first+mid+sec;
+        newname=mid+sec;
         oldFrame = cv::imread(name);
         
-        on_trackbar( value_slider, 0 );
-        on_trackbar2(saturation_slider,0);
-        //cout<<value<<"+"<<saturation<<"-\n";
         float blue_sum[my_settings.no_segs*(2)] = {0};
         float green_sum[my_settings.no_segs*(2)] = {0};
         float red_sum[my_settings.no_segs*(2)] = {0};
@@ -248,30 +202,6 @@ int main()
             count[matrix[i]]++;
         }
 
-
-        for(int i=0;i<=my_settings.no_segs;i++)
-        {
-
-            RgbColor rgb_obj;
-            rgb_obj.r = red_sum[i]/count[i] ;// r
-            rgb_obj.g = green_sum[i]/count[i] ;// r
-            rgb_obj.b = blue_sum[i]/count[i] ;// r
-            HsvColor hsv_obj= RgbToHsv(rgb_obj);
-                
-            if(hsv_obj.v>value*300 && hsv_obj.s<saturation*300)
-                lable=1;                           
-            else
-                lable=0;
-                
-            red_sum[i] = lable*255*count[i];
-            green_sum[i] = lable*255*count[i];
-            blue_sum[i] = lable*255*count[i];
-                       
-            //if(int(rgb_obj.r)!= 0)
-              //  cout<<int(rgb_obj.r)<<" "<<int(rgb_obj.g)<<" "<<int(rgb_obj.b)<<" "<<lable<<"\n";
-        }
-        setMouseCallback("tt2", CallBackFunc, NULL);
-
         ///Re-inserting the average values back into the image
         for(int i=0;i<my_settings.img_size.y;i++)
         {
@@ -299,6 +229,8 @@ int main()
         
         resize(M, M2, s1);
         cv::imshow("tt2",M2);
+
+        cv::imwrite(newname,M2);
 
 
 
