@@ -133,7 +133,7 @@ void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
 }
 ///
     //Defining here to use everywhere without passing through functions
-    int matrix[640*480] = {0};
+    int matrix[300000] = {0};
     int superFlag=1;
     int superID;
 
@@ -159,7 +159,7 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 
 
 
-int main()
+int main(int argc, char** argv)
 {
     gSLICr::objects::settings my_settings;
 
@@ -186,6 +186,7 @@ int main()
     Mat oldFrame, frame;
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
     int key,h=0;
+
     cin>>h;
         //for(int i=0;i<=h;i++)
         //{
@@ -306,6 +307,7 @@ int main()
         }
     }
     n=26;
+    int ones=0;
     for(int i=0;i<676;i++)
     {            
         if(i/n==0 || i%n==0 || i/n==n-1 || i%n==n-1){
@@ -315,6 +317,7 @@ int main()
         }
         else cout<<new_lable[i]<<", ";
     }
+    //cout<<"Total number of ones in this file are :"<<ones<<endl;  
     Mat M4;
     resize(M, M4, s1);
     std::string newname(".bmp");
