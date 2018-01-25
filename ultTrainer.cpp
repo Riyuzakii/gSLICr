@@ -122,18 +122,21 @@ std::string ToString(int val)
 }
 void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
 {
-   if(c[n*x+y]!=0){
+   if(c[n*x+y]!=0 && rs[n*x+y]/c[n*x+y]>16 && bs[n*x+y]/c[n*x+y]>16 && gs[n*x+y]/c[n*x+y]>16 ){
         cout<<(int)(rs[n*x+y]/c[n*x+y])<<" ";
         cout<<(int)(bs[n*x+y]/c[n*x+y])<<" ";
         cout<<(int)(gs[n*x+y]/c[n*x+y])<<" ";
     }
     else {
-        cout<<"0 0 255 ";
+        rs[n*x+y]=100*c[n*x+y];
+        bs[n*x+y]=150*c[n*x+y];
+        gs[n*x+y]=50*c[n*x+y];
+        cout<<"100 150 50 ";
     }
 }
 ///
     //Defining here to use everywhere without passing through functions
-    int matrix[300000] = {0};
+    int matrix[800*800] = {0};
     int superFlag=1;
     int superID;
 
@@ -144,14 +147,14 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
     {
         //cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;
         superFlag=1;
-        superID =matrix[x+y*500];
+        superID =matrix[x+y*800];
         //cout<<superFlag<<endl;
     }
     else if  ( event == EVENT_RBUTTONDOWN )
     {
         //cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;
         superFlag = 0;
-        superID= matrix[x + y*500];
+        superID= matrix[x + y*800];
         //cout<<superFlag<<endl;
     }
     
@@ -159,15 +162,15 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 
 
 
-int main(int argc, char** argv)
+int main()
 {
     gSLICr::objects::settings my_settings;
 
-    my_settings.img_size.x = 500;
-    my_settings.img_size.y = 500;
-    my_settings.no_segs = 750;
+    my_settings.img_size.x = 800;
+    my_settings.img_size.y = 800;
+    my_settings.no_segs = 1600;
     my_settings.spixel_size = 100;
-    my_settings.coh_weight = 1.0f;
+    my_settings.coh_weight = 0.8f;
     my_settings.no_iters = 5;
     my_settings.color_space = gSLICr::CIELAB; // gSLICr::CIELAB for Lab, or gSLICr::RGB for RGB
     my_settings.seg_method = gSLICr::GIVEN_NUM; // or gSLICr::GIVEN_NUM for given number
@@ -182,17 +185,16 @@ int main(int argc, char** argv)
 
     Size s(my_settings.img_size.x, my_settings.img_size.y);
     //Size s1(640, 480);
-    Size s1(500,500);
+    Size s1(800,800);
     Mat oldFrame, frame;
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
     int key,h=0;
-
     cin>>h;
         //for(int i=0;i<=h;i++)
         //{
         //h++;
-        std::string first ("../dr3/");
-        std::string sec (".png");
+        std::string first ("../top_view_dataset/test_0/frame000");
+        std::string sec (".jpg");
         std::string mid = ToString(h);
         std::string name;
         name=first+mid+sec;
@@ -208,7 +210,7 @@ int main(int argc, char** argv)
         int sum_x[my_settings.no_segs] = {0};
         int sum_y[my_settings.no_segs] = {0};
 
-        int count[750]={0};
+        int count[1600]={0};
         resize(oldFrame, frame, s);
         
         load_image(frame, in_img);
@@ -248,8 +250,8 @@ int main(int argc, char** argv)
             sum_y[matrix[i]]+= (i%my_settings.img_size.x);
             count[matrix[i]]++;
         }
-        for(int x=1;x<=24;x++)
-            for(int y=1;y<=24;y++){
+        for(int x=1;x<=40;x++)
+            for(int y=1;y<=40;y++){
             print(red_sum, green_sum, blue_sum, count, x-1,y-1,n);
             print(red_sum, green_sum, blue_sum, count, x-1,y,n);
             print(red_sum, green_sum, blue_sum, count, x-1,y+1,n);
@@ -261,6 +263,30 @@ int main(int argc, char** argv)
             print(red_sum, green_sum, blue_sum, count, x+1,y+1,n);
             cout<<endl;
         }
+
+         for(int x=1;x<=40;x++)
+            for(int y=1;y<=40;y++){
+            print(red_sum, green_sum, blue_sum, count, x,y,n);
+            cout<<endl;
+        }
+
+        for(int i=0;i<my_settings.img_size.y;i++)
+        {
+            for(int j=0;j<my_settings.img_size.x;j++)
+            {
+                M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
+                M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
+                M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+            }
+        }
+    std::string newname(".png");
+    std::string newname2("_.png");
+    string newest,newest2;
+    newest = mid + newname;
+    newest2 = mid + newname2;
+
+        cv::imwrite(newest2,M);
+
 
     while(1){
         cv::namedWindow("Binary",5);
@@ -306,23 +332,23 @@ int main(int argc, char** argv)
                 else new_lable[matrix[i*my_settings.img_size.x + j ]]=1;
         }
     }
-    n=26;
-    int ones=0;
-    for(int i=0;i<676;i++)
+    n=40;
+    for(int i=0;i<40*40;i++)
     {            
         if(i/n==0 || i%n==0 || i/n==n-1 || i%n==n-1){
                 red_sum[i] =0;
                 green_sum[i] =0;
                 blue_sum[i] =0;
+                cout<<"0 ";
         }
-        else cout<<new_lable[i]<<", ";
+        else cout<<new_lable[i]<<" ";
     }
-    //cout<<"Total number of ones in this file are :"<<ones<<endl;  
+    cout<<endl;
+    //for(int i=0;i<800*800;i++)
+      //  cout<<matrix[i]<<" ";
     Mat M4;
     resize(M, M4, s1);
-    std::string newname(".bmp");
-    string newest;
-    newest = mid + newname;
+    
     cv::imwrite(newest,M4);
     destroyAllWindows();
     return 0;
