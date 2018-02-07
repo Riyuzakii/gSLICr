@@ -120,25 +120,27 @@ std::string ToString(int val)
     ss<<val;
     return ss.str();
 }
+
+int blues[3200]={0}, reds[3200]={0}, greens[3200]={0};
 void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
 {
-   if(c[n*x+y]!=0 && rs[n*x+y]/c[n*x+y]>16 && bs[n*x+y]/c[n*x+y]>16 && gs[n*x+y]/c[n*x+y]>16 ){
-        cout<<(int)(rs[n*x+y]/c[n*x+y])<<" ";
-        cout<<(int)(bs[n*x+y]/c[n*x+y])<<" ";
-        cout<<(int)(gs[n*x+y]/c[n*x+y])<<" ";
+   if(c[n*x+y]!=0 && (rs[n*x+y]/c[n*x+y]>16 || bs[n*x+y]/c[n*x+y]>16 || gs[n*x+y]/c[n*x+y]>16 )){
+        reds[n*x+y]=(int)(rs[n*x+y]/c[n*x+y]);
+        blues[n*x+y]=(int)(bs[n*x+y]/c[n*x+y]);
+        greens[x*n+y]=(int)(gs[n*x+y]/c[n*x+y]);
     }
     else {
-        rs[n*x+y]=100*c[n*x+y];
-        bs[n*x+y]=150*c[n*x+y];
-        gs[n*x+y]=50*c[n*x+y];
-        cout<<"100 150 50 ";
+        reds[n*x+y] = rs[n*x+y]=100*c[n*x+y];
+        blues[n*x+y] = bs[n*x+y]=150*c[n*x+y];
+        greens[x*n+y] = gs[n*x+y]=50*c[n*x+y];
+        //cout<<"100 150 50 ";
     }
 }
 ///
     //Defining here to use everywhere without passing through functions
     int matrix[800*800] = {0};
-    int superFlag=1;
-    int superID;
+    int superFlag=-1;
+    int superID=-1;
 
 void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 {
@@ -170,7 +172,7 @@ int main()
     my_settings.img_size.y = 800;
     my_settings.no_segs = 1600;
     my_settings.spixel_size = 100;
-    my_settings.coh_weight = 0.8f;
+    my_settings.coh_weight = 0.6f;
     my_settings.no_iters = 5;
     my_settings.color_space = gSLICr::CIELAB; // gSLICr::CIELAB for Lab, or gSLICr::RGB for RGB
     my_settings.seg_method = gSLICr::GIVEN_NUM; // or gSLICr::GIVEN_NUM for given number
@@ -190,111 +192,87 @@ int main()
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
     int key,h=0;
     cin>>h;
-        //for(int i=0;i<=h;i++)
-        //{
-        //h++;
-        std::string first ("../top_view_dataset/test_0/frame000");
-        std::string sec (".jpg");
-        std::string mid = ToString(h);
-        std::string name;
-        name=first+mid+sec;
-        oldFrame = cv::imread(name);
-        //cout<<Lvalue<<"+"<<Hvalue<<"-\n";
-        
-        float blue_sum[my_settings.no_segs*(2)] = {0};
-        float green_sum[my_settings.no_segs*(2)] = {0};
-        float red_sum[my_settings.no_segs*(2)] = {0};
-        int blue[my_settings.img_size.x][my_settings.img_size.y] = {0};
-        int green[my_settings.img_size.x][my_settings.img_size.y] = {0};
-        int red[my_settings.img_size.x][my_settings.img_size.y] = {0};
-        int sum_x[my_settings.no_segs] = {0};
-        int sum_y[my_settings.no_segs] = {0};
+    std::string first ("../igvc_small_dataset/igvc_");
+    std::string sec (".png");
+    std::string mid = ToString(h);
+    std::string name;
+    name=first+mid+sec;
+    oldFrame = cv::imread(name);
+    //cout<<Lvalue<<"+"<<Hvalue<<"-\n";
+    
+    float blue_sum[my_settings.no_segs*(2)] = {0};
+    float green_sum[my_settings.no_segs*(2)] = {0};
+    float red_sum[my_settings.no_segs*(2)] = {0};
+    int blue[my_settings.img_size.x][my_settings.img_size.y] = {0};
+    int green[my_settings.img_size.x][my_settings.img_size.y] = {0};
+    int red[my_settings.img_size.x][my_settings.img_size.y] = {0};
+    int sum_x[my_settings.no_segs] = {0};
+    int sum_y[my_settings.no_segs] = {0};
+    
+    int count[1600]={0};
+    resize(oldFrame, frame, s);
+    
+    load_image(frame, in_img);
+    gSLICr_engine->Process_Frame(in_img);
+    gSLICr_engine->Draw_Segmentation_Result(out_img);
+    load_image(out_img, boundry_draw_frame);
+    cv::namedWindow("InitialImg",0);
+    cv::imshow("InitialImg", frame);
 
-        int count[1600]={0};
-        resize(oldFrame, frame, s);
-        
-        load_image(frame, in_img);
-        gSLICr_engine->Process_Frame(in_img);
-        gSLICr_engine->Draw_Segmentation_Result(out_img);
-        load_image(out_img, boundry_draw_frame);
-        cv::namedWindow("InitialImg",0);
-        cv::imshow("InitialImg", frame);
-        //cv::namedWindow("FinalImg",0);
-        
-
-        gSLICr_engine->Write_Seg_Res_To_PGM("abc",matrix);
-        Mat M = frame;
-        Mat M2,Mimg;
-        int lable;
-        int prev_lable[my_settings.no_segs]={0};
-
-
-        ///Retrieving colour channels from the jimage
-        for(int i=0;i<my_settings.img_size.x;i++)
+    gSLICr_engine->Write_Seg_Res_To_PGM("abc",matrix);
+    Mat M = frame;
+    Mat M2,Mimg;
+    int lable;
+    int prev_lable[my_settings.no_segs]={0};
+    ///Retrieving colour channels from the jimage
+    for(int i=0;i<my_settings.img_size.x;i++)
+    {
+        for(int j=0;j<my_settings.img_size.y;j++)
         {
-            for(int j=0;j<my_settings.img_size.y;j++)
-            {
-                blue[i][j] = M.at<cv::Vec3b>(i,j)[0]; // b
-                green[i][j] = M.at<cv::Vec3b>(i,j)[1]; // g
-                red[i][j] = M.at<cv::Vec3b>(i,j)[2]; // r
-            }
+            blue[i][j] = M.at<cv::Vec3b>(i,j)[0]; // b
+            green[i][j] = M.at<cv::Vec3b>(i,j)[1]; // g
+            red[i][j] = M.at<cv::Vec3b>(i,j)[2]; // r
         }
-
-        ///Summing over the pixel Lvalues of all segments
-        for(int i=0;i<my_settings.img_size.x*my_settings.img_size.y;i++)
+    }
+    
+    ///Summing over the pixel Lvalues of all segments
+    for(int i=0;i<my_settings.img_size.x*my_settings.img_size.y;i++)
+    {
+        blue_sum[matrix[i]]+= blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
+        red_sum[matrix[i]]+= red[i/my_settings.img_size.x][i%my_settings.img_size.x];
+        green_sum[matrix[i]]+= green[i/my_settings.img_size.x][i%my_settings.img_size.x];
+        sum_x[matrix[i]]+=  ( i/my_settings.img_size.x);
+        sum_y[matrix[i]]+= (i%my_settings.img_size.x);
+        count[matrix[i]]++;
+    }
+     for(int x=0;x<40;x++)
+        for(int y=0;y<40;y++){
+        print(red_sum, green_sum, blue_sum, count, x,y,n);
+    }
+    
+    for(int i=0;i<my_settings.img_size.y;i++)
+    {
+        for(int j=0;j<my_settings.img_size.x;j++)
         {
-            blue_sum[matrix[i]]+= blue[i/my_settings.img_size.x][i%my_settings.img_size.x];
-            red_sum[matrix[i]]+= red[i/my_settings.img_size.x][i%my_settings.img_size.x];
-            green_sum[matrix[i]]+= green[i/my_settings.img_size.x][i%my_settings.img_size.x];
-            sum_x[matrix[i]]+=  ( i/my_settings.img_size.x);
-            sum_y[matrix[i]]+= (i%my_settings.img_size.x);
-            count[matrix[i]]++;
+            M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
+            M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
+            M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
         }
-        for(int x=1;x<=40;x++)
-            for(int y=1;y<=40;y++){
-            print(red_sum, green_sum, blue_sum, count, x-1,y-1,n);
-            print(red_sum, green_sum, blue_sum, count, x-1,y,n);
-            print(red_sum, green_sum, blue_sum, count, x-1,y+1,n);
-            print(red_sum, green_sum, blue_sum, count, x,y-1,n);
-            print(red_sum, green_sum, blue_sum, count, x,y,n);
-            print(red_sum, green_sum, blue_sum, count, x,y+1,n);
-            print(red_sum, green_sum, blue_sum, count, x+1,y-1,n);
-            print(red_sum, green_sum, blue_sum, count, x+1,y,n);
-            print(red_sum, green_sum, blue_sum, count, x+1,y+1,n);
-            cout<<endl;
-        }
-
-         for(int x=1;x<=40;x++)
-            for(int y=1;y<=40;y++){
-            print(red_sum, green_sum, blue_sum, count, x,y,n);
-            cout<<endl;
-        }
-
-        for(int i=0;i<my_settings.img_size.y;i++)
-        {
-            for(int j=0;j<my_settings.img_size.x;j++)
-            {
-                M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
-                M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
-                M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
-            }
-        }
+    }
     std::string newname(".png");
     std::string newname2("_.png");
     string newest,newest2;
     newest = mid + newname;
     newest2 = mid + newname2;
-
-        cv::imwrite(newest2,M);
-
-
+    cv::imwrite(newest2,M);
     while(1){
         cv::namedWindow("Binary",5);
         setMouseCallback("Binary", CallBackFunc, NULL);
-        //cout<<superFlag<<endl;
+        
         blue_sum[superID]= 255*superFlag*count[superID];
         red_sum[superID]= 255*superFlag*count[superID];
         green_sum[superID]= 255*superFlag*count[superID];
+        
         ///Re-inserting the average Lvalues back into the image
         for(int i=0;i<my_settings.img_size.y;i++)
         {
@@ -313,7 +291,9 @@ int main()
         if (key == 27) break;
         
     }
-        int new_lable[my_settings.no_segs]={0};
+    
+    int new_lable[my_settings.no_segs]={0};
+    
     for(int i=0;i<my_settings.img_size.y;i++)
         {
             for(int j=0;j<my_settings.img_size.x;j++)
@@ -334,18 +314,8 @@ int main()
     }
     n=40;
     for(int i=0;i<40*40;i++)
-    {            
-        if(i/n==0 || i%n==0 || i/n==n-1 || i%n==n-1){
-                red_sum[i] =0;
-                green_sum[i] =0;
-                blue_sum[i] =0;
-                cout<<"0 ";
-        }
-        else cout<<new_lable[i]<<" ";
-    }
+        cout<<reds[i]<<" "<<blues[i]<<" "<<greens[i]<<" "<<new_lable[i]<<endl;
     cout<<endl;
-    //for(int i=0;i<800*800;i++)
-      //  cout<<matrix[i]<<" ";
     Mat M4;
     resize(M, M4, s1);
     
