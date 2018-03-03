@@ -21,72 +21,6 @@
 using namespace std;
 using namespace cv;
 
-typedef struct {
-    double r;       // a fraction between 0 and 1
-    double g;       // a fraction between 0 and 1
-    double b;       // a fraction between 0 and 1
-} rgb;
-
-typedef struct {
-    double h;       // angle in degrees
-    double s;       // a fraction between 0 and 1
-    double v;       // a fraction between 0 and 1
-} hsv;
-
-static hsv   rgb2hsv(rgb in);
-static rgb   hsv2rgb(hsv in);
-
-hsv rgb2hsv(rgb in)
-{
-    hsv         out;
-    double      min, max, delta;
-
-    min = in.r < in.g ? in.r : in.g;
-    min = min  < in.b ? min  : in.b;
-
-    max = in.r > in.g ? in.r : in.g;
-    max = max  > in.b ? max  : in.b;
-
-    out.v = max;                                // v
-    delta = max - min;
-    if (delta < 0.00001)
-    {
-        out.s = 0;
-        out.h = 0; // undefined, maybe nan?
-        return out;
-    }
-    if( max > 0.0 ) { // NOTE: if Max is == 0, this divide would cause a crash
-        out.s = (delta / max);                  // s
-    } else {
-        // if max is 0, then r = g = b = 0              
-        // s = 0, h is undefined
-        out.s = 0.0;
-        out.h = NAN;                            // its now undefined
-        return out;
-    }
-    if( in.r >= max )                           // > is bogus, just keeps compilor happy
-        out.h = ( in.g - in.b ) / delta;        // between yellow & magenta
-    else
-    if( in.g >= max )
-        out.h = 2.0 + ( in.b - in.r ) / delta;  // between cyan & yellow
-    else
-        out.h = 4.0 + ( in.r - in.g ) / delta;  // between magenta & cyan
-
-    out.h *= 60.0;                              // degrees
-
-    if( out.h < 0.0 )
-        out.h += 360.0;
-
-    return out;
-}
-struct pub_info
-{
-    float centre_x;
-    float centre_y;
-    float avg_colors[3];
-    float size;
-};
-
 void load_image(const Mat& inimg, gSLICr::UChar4Image* outimg)
 {
     gSLICr::Vector4u* outimg_ptr = outimg->GetData(MEMORYDEVICE_CPU);
@@ -131,16 +65,16 @@ void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
     }
     else {
         reds[n*x+y] = rs[n*x+y]=100*c[n*x+y];
-        blues[n*x+y] = bs[n*x+y]=150*c[n*x+y];
-        greens[x*n+y] = gs[n*x+y]=50*c[n*x+y];
+        blues[n*x+y] = bs[n*x+y]=50*c[n*x+y]; // why not only 100
+        greens[x*n+y] = gs[n*x+y]=150*c[n*x+y];
         //cout<<"100 150 50 ";
     }
 }
 ///
     //Defining here to use everywhere without passing through functions
-    int size_x=800;
-    int size_y=800;
-    int matrix[800*800] = {0};
+    int size_x=1800;
+    int size_y=1800;
+    int matrix[1800*1800] = {0};
     int superFlag=-1;
     int superID=-1;
 
@@ -164,17 +98,24 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
     
 }
 
-
+    float blue_sum[3600*(2)] = {0};
+    float green_sum[3600*(2)] = {0};
+    float red_sum[3600*(2)] = {0};
+    int blue[1800][1800] = {0};
+    int green[1800][1800] = {0};
+    int red[1800][1800]= {0};
+    int sum_x[3600] = {0};
+    int sum_y[3600] = {0};
 
 int main()
 {
     gSLICr::objects::settings my_settings;
-    int length=40;
-    int height=40;
+    int length=60;
+    int height=60;
     my_settings.img_size.x = size_x;
     my_settings.img_size.y = size_y;
     my_settings.no_segs = length*height;
-    my_settings.spixel_size = 100;
+    my_settings.spixel_size = 8;
     my_settings.coh_weight = 0.6f;
     my_settings.no_iters = 5;
     my_settings.color_space = gSLICr::CIELAB; // gSLICr::CIELAB for Lab, or gSLICr::RGB for RGB
@@ -203,14 +144,7 @@ int main()
     oldFrame = cv::imread(name);
     //cout<<Lvalue<<"+"<<Hvalue<<"-\n";
     
-    float blue_sum[my_settings.no_segs*(2)] = {0};
-    float green_sum[my_settings.no_segs*(2)] = {0};
-    float red_sum[my_settings.no_segs*(2)] = {0};
-    int blue[my_settings.img_size.x][my_settings.img_size.y] = {0};
-    int green[my_settings.img_size.x][my_settings.img_size.y] = {0};
-    int red[my_settings.img_size.x][my_settings.img_size.y] = {0};
-    int sum_x[my_settings.no_segs] = {0};
-    int sum_y[my_settings.no_segs] = {0};
+   
     
     int count[my_settings.no_segs]={0};
     resize(oldFrame, frame, s);
@@ -250,16 +184,24 @@ int main()
     }
      for(int x=0;x<length;x++)
         for(int y=0;y<height;y++){
-        print(red_sum, green_sum, blue_sum, count, x,y,n);
+        print(red_sum, blue_sum,green_sum, count, x,y,n);
     }
     
     for(int i=0;i<my_settings.img_size.y;i++)
     {
         for(int j=0;j<my_settings.img_size.x;j++)
         {
-            M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
-            M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
-            M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+            if(count[matrix[i*my_settings.img_size.x + j]]==0){
+                M.at<cv::Vec3b>(i,j)[0] = 0;//blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
+                M.at<cv::Vec3b>(i,j)[1] = 0;//green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
+                M.at<cv::Vec3b>(i,j)[2] = 0;//red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+
+            }
+            else{
+                M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
+                M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
+                M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+            }
         }
     }
     std::string newname(".png");
@@ -278,14 +220,22 @@ int main()
         
         ///Re-inserting the average Lvalues back into the image
         for(int i=0;i<my_settings.img_size.y;i++)
+    {
+        for(int j=0;j<my_settings.img_size.x;j++)
         {
-            for(int j=0;j<my_settings.img_size.x;j++)
-            {
+            if(count[matrix[i*my_settings.img_size.x + j]]==0){
+                M.at<cv::Vec3b>(i,j)[0] = 0;//blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
+                M.at<cv::Vec3b>(i,j)[1] = 0;//green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
+                M.at<cv::Vec3b>(i,j)[2] = 0;//red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+
+            }
+            else{
                 M.at<cv::Vec3b>(i,j)[0] = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
                 M.at<cv::Vec3b>(i,j)[1] = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
                 M.at<cv::Vec3b>(i,j)[2] = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
             }
         }
+    }
         Mat M3;
         resize(M, M3, s1);
         //cv::imshow("FinalImg",M2);
@@ -301,9 +251,17 @@ int main()
         {
             for(int j=0;j<my_settings.img_size.x;j++)
             {
-                int bs = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
-                int gs = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
-                int rs = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+                int bs,gs,rs;
+                if(count[matrix[i*my_settings.img_size.x + j]]==0){
+                    bs = 0;
+                    gs = 0;
+                    rs = 0;
+                }
+                else{
+                    bs = blue_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// b
+                    gs = green_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// g
+                    rs = red_sum[matrix[i*my_settings.img_size.x + j ]]/count[matrix[i*my_settings.img_size.x + j]] ;// r
+                }
 
                 if(bs!=255 && gs!=255 && rs!=255){
                     bs=gs=rs=0;
