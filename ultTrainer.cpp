@@ -121,7 +121,7 @@ std::string ToString(int val)
     return ss.str();
 }
 
-int blues[3200]={0}, reds[3200]={0}, greens[3200]={0};
+int blues[7200]={0}, reds[7200]={0}, greens[7200]={0};
 void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
 {
    if(c[n*x+y]!=0 && (rs[n*x+y]/c[n*x+y]>16 || bs[n*x+y]/c[n*x+y]>16 || gs[n*x+y]/c[n*x+y]>16 )){
@@ -138,6 +138,8 @@ void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
 }
 ///
     //Defining here to use everywhere without passing through functions
+    int size_x=800;
+    int size_y=800;
     int matrix[800*800] = {0};
     int superFlag=-1;
     int superID=-1;
@@ -149,14 +151,14 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
     {
         //cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;
         superFlag=1;
-        superID =matrix[x+y*800];
+        superID =matrix[x+y*size_x];
         //cout<<superFlag<<endl;
     }
     else if  ( event == EVENT_RBUTTONDOWN )
     {
         //cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;
         superFlag = 0;
-        superID= matrix[x + y*800];
+        superID= matrix[x + y*size_x];
         //cout<<superFlag<<endl;
     }
     
@@ -167,10 +169,11 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
 int main()
 {
     gSLICr::objects::settings my_settings;
-
-    my_settings.img_size.x = 800;
-    my_settings.img_size.y = 800;
-    my_settings.no_segs = 1600;
+    int length=40;
+    int height=40;
+    my_settings.img_size.x = size_x;
+    my_settings.img_size.y = size_y;
+    my_settings.no_segs = length*height;
     my_settings.spixel_size = 100;
     my_settings.coh_weight = 0.6f;
     my_settings.no_iters = 5;
@@ -187,13 +190,13 @@ int main()
 
     Size s(my_settings.img_size.x, my_settings.img_size.y);
     //Size s1(640, 480);
-    Size s1(800,800);
+    Size s1(size_x,size_y);
     Mat oldFrame, frame;
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
     int key,h=0;
     cin>>h;
-    std::string first ("../igvc_small_dataset/igvc_");
-    std::string sec (".png");
+    std::string first ("../top_view_dataset/test_0/frame000");
+    std::string sec (".jpg");
     std::string mid = ToString(h);
     std::string name;
     name=first+mid+sec;
@@ -209,7 +212,7 @@ int main()
     int sum_x[my_settings.no_segs] = {0};
     int sum_y[my_settings.no_segs] = {0};
     
-    int count[1600]={0};
+    int count[my_settings.no_segs]={0};
     resize(oldFrame, frame, s);
     
     load_image(frame, in_img);
@@ -245,8 +248,8 @@ int main()
         sum_y[matrix[i]]+= (i%my_settings.img_size.x);
         count[matrix[i]]++;
     }
-     for(int x=0;x<40;x++)
-        for(int y=0;y<40;y++){
+     for(int x=0;x<length;x++)
+        for(int y=0;y<height;y++){
         print(red_sum, green_sum, blue_sum, count, x,y,n);
     }
     
@@ -313,8 +316,13 @@ int main()
         }
     }
     n=40;
-    for(int i=0;i<40*40;i++)
-        cout<<reds[i]<<" "<<blues[i]<<" "<<greens[i]<<" "<<new_lable[i]<<endl;
+    for(int i=0;i<length*height;i++){
+        if(blues[i]>255){
+            cout<<"50 150 100 "<<new_lable[i]<<endl;
+        }
+        else
+            cout<<" "<<blues[i]<<" "<<greens[i]<<" "<<reds[i]<<" "<<new_lable[i]<<endl;
+    }
     cout<<endl;
     Mat M4;
     resize(M, M4, s1);
