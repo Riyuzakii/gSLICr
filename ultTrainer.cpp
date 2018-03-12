@@ -58,7 +58,7 @@ std::string ToString(int val)
 int blues[7200]={0}, reds[7200]={0}, greens[7200]={0};
 void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
 {
-   if(c[n*x+y]!=0 && (rs[n*x+y]/c[n*x+y]>16 || bs[n*x+y]/c[n*x+y]>16 || gs[n*x+y]/c[n*x+y]>16 )){
+   if(c[n*x+y]!=0 && (rs[n*x+y]/c[n*x+y]>16 || bs[n*x+y]/c[n*x+y]>16 || gs[n*x+y]/c[n*x+y]>16)){
         reds[n*x+y]=(int)(rs[n*x+y]/c[n*x+y]);
         blues[n*x+y]=(int)(bs[n*x+y]/c[n*x+y]);
         greens[x*n+y]=(int)(gs[n*x+y]/c[n*x+y]);
@@ -72,9 +72,9 @@ void print(float rs[],float bs[], float gs[] ,int c[],int x,int y,int n)
 }
 ///
     //Defining here to use everywhere without passing through functions
-    int size_x=1800;
-    int size_y=1800;
-    int matrix[1800*1800] = {0};
+    int size_x=800;
+    int size_y=800;
+    int matrix[800*800] = {0};
     int superFlag=-1;
     int superID=-1;
 
@@ -98,20 +98,20 @@ void CallBackFunc(int event, int x, int y, int flags, void* userdata)
     
 }
 
-    float blue_sum[3600*(2)] = {0};
-    float green_sum[3600*(2)] = {0};
-    float red_sum[3600*(2)] = {0};
-    int blue[1800][1800] = {0};
-    int green[1800][1800] = {0};
-    int red[1800][1800]= {0};
-    int sum_x[3600] = {0};
-    int sum_y[3600] = {0};
+    float blue_sum[1600*(2)] = {0};
+    float green_sum[1600*(2)] = {0};
+    float red_sum[1600*(2)] = {0};
+    int blue[800][800] = {0};
+    int green[800][800] = {0};
+    int red[800][800]= {0};
+    int sum_x[1600] = {0};
+    int sum_y[1600] = {0};
 
 int main()
 {
     gSLICr::objects::settings my_settings;
-    int length=60;
-    int height=60;
+    int height=40;
+    int length=40;
     my_settings.img_size.x = size_x;
     my_settings.img_size.y = size_y;
     my_settings.no_segs = length*height;
@@ -136,7 +136,7 @@ int main()
     Mat boundry_draw_frame; boundry_draw_frame.create(s, CV_8UC3);
     int key,h=0;
     cin>>h;
-    std::string first ("../top_view_dataset/test_0/frame000");
+    std::string first ("./today/frame000");
     std::string sec (".jpg");
     std::string mid = ToString(h);
     std::string name;
