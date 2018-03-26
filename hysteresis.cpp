@@ -214,8 +214,8 @@ int main()
     //for(int i=0;i<=h;i++)
     //{
         //h++;
-        std::string first ("../dr/");
-        std::string sec (".png");
+        std::string first ("./today/frame000");
+        std::string sec (".jpg");
         std::string mid = ToString(h);
         std::string name;
         name=first+mid+sec;

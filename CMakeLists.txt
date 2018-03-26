@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(gSLICr)
-  
+
 IF(MSVC_IDE)
   set(OpenCV_STATIC OFF)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -60,4 +60,7 @@ add_executable(splfitter splfitter.cpp)
 target_link_libraries(splfitter gSLICr_lib ${OpenCV_LIBS})
 add_executable(ultTrainer ultTrainer.cpp)
 target_link_libraries(ultTrainer gSLICr_lib ${OpenCV_LIBS})
-
+add_executable(explorer explorer.cpp)
+target_link_libraries(explorer gSLICr_lib ${OpenCV_LIBS})
+add_executable(blu-chan blu-chan.cpp)
+target_link_libraries(blu-chan gSLICr_lib ${OpenCV_LIBS})
